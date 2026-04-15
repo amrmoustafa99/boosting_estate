@@ -52,6 +52,8 @@ This project focuses on:
 <img width="397" height="860" alt="image" src="https://github.com/user-attachments/assets/2e19f08c-7879-4b39-a752-7a84a6d16555" />
 
 ### Boost Page
+<img width="400" height="856" alt="image" src="https://github.com/user-attachments/assets/3e84cd15-8d6a-4e20-be36-b126d5586b00" />
+
 <img width="398" height="850" alt="image" src="https://github.com/user-attachments/assets/55a55472-9793-4a16-a9e9-151ef1607b73" />
 
 ### Success Page
