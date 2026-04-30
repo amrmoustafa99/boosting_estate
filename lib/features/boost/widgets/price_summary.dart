@@ -1,46 +1,36 @@
 import 'package:flutter/material.dart';
 
-import '../../../../core/theme/app_theme.dart';
+import '../../../core/theme/app_theme.dart';
 import '../models/boost_selection_state.dart';
 
-/// Displays a breakdown of selected boosts and the running total.
-/// Sticks to the bottom of the boost page.
 class PriceSummary extends StatelessWidget {
   final BoostSelectionState state;
-
   const PriceSummary({super.key, required this.state});
 
   @override
   Widget build(BuildContext context) {
     if (!state.hasSelection) return const SizedBox.shrink();
-
     return AnimatedSize(
       duration: const Duration(milliseconds: 250),
       curve: Curves.easeInOut,
       child: Container(
-        margin: const EdgeInsets.only(
-          left: AppTheme.spaceM,
-          right: AppTheme.spaceM,
-          bottom: AppTheme.spaceS,
+        margin: const EdgeInsets.fromLTRB(
+          AppTheme.spaceM,
+          0,
+          AppTheme.spaceM,
+          AppTheme.spaceS,
         ),
         padding: const EdgeInsets.all(AppTheme.spaceM),
         decoration: BoxDecoration(
           color: AppTheme.surface,
           borderRadius: BorderRadius.circular(AppTheme.radiusL),
           border: Border.all(color: AppTheme.border),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.06),
-              blurRadius: 20,
-              offset: const Offset(0, -4),
-            ),
-          ],
+          boxShadow: AppTheme.shadowMd,
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisSize: MainAxisSize.min,
           children: [
-            // Section label
             const Text(
               'Order Summary',
               style: TextStyle(
@@ -53,50 +43,10 @@ class PriceSummary extends StatelessWidget {
             const SizedBox(height: AppTheme.spaceS),
             const Divider(color: AppTheme.border, height: 1),
             const SizedBox(height: AppTheme.spaceS),
-
-            // Line items
-            ...state.selectedLabels.map(
-              (label) => Padding(
-                padding: const EdgeInsets.symmetric(vertical: 4),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Row(
-                      children: [
-                        const Icon(
-                          Icons.check_circle_rounded,
-                          size: 14,
-                          color: AppTheme.success,
-                        ),
-                        const SizedBox(width: 6),
-                        Text(
-                          label,
-                          style: const TextStyle(
-                            fontSize: 13,
-                            color: AppTheme.textPrimary,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ],
-                    ),
-                    Text(
-                      '\$${_priceForLabel(label).toStringAsFixed(2)}',
-                      style: const TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                        color: AppTheme.textPrimary,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-
+            ...state.selectedItems.map((item) => _buildLineItem(item)),
             const SizedBox(height: AppTheme.spaceS),
             const Divider(color: AppTheme.border, height: 1),
             const SizedBox(height: AppTheme.spaceS),
-
-            // Total row
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -124,16 +74,71 @@ class PriceSummary extends StatelessWidget {
     );
   }
 
-  /// Gets the price for a label line item — used for the breakdown display
-  double _priceForLabel(String label) {
-    if (label.contains('In-App')) {
-      return state.selectedDuration?.price ?? 0;
-    }
-    if (label.contains('Push')) return 4.99;
-    if (label.contains('Instagram')) {
-      return state.selectedInstagram?.price ?? 0;
-    }
-    if (label.contains('WhatsApp')) return 6.99;
-    return 0;
+  Widget _buildLineItem(SelectedBoostItem item) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        children: [
+          const Icon(
+            Icons.check_circle_rounded,
+            size: 14,
+            color: AppTheme.success,
+          ),
+          const SizedBox(width: 6),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  item.label,
+                  style: const TextStyle(
+                    fontSize: 13,
+                    color: AppTheme.textPrimary,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                Row(
+                  children: [
+                    if (item.isRecurring)
+                      _pill(
+                        'Recurring',
+                        AppTheme.primaryLight,
+                        AppTheme.primary,
+                      ),
+                    if (!item.isProcessingAuto)
+                      _pill('Manual', AppTheme.warningLight, AppTheme.warning),
+                    if (item.isProcessingAuto && !item.isRecurring)
+                      _pill('Auto', AppTheme.successLight, AppTheme.success),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          Text(
+            '\$${item.price.toStringAsFixed(2)}',
+            style: const TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+              color: AppTheme.textPrimary,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _pill(String label, Color bg, Color fg) {
+    return Container(
+      margin: const EdgeInsets.only(right: 4, top: 2),
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+      decoration: BoxDecoration(
+        color: bg,
+        borderRadius: BorderRadius.circular(99),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(fontSize: 9, fontWeight: FontWeight.w700, color: fg),
+      ),
+    );
   }
 }

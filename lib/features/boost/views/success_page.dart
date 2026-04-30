@@ -1,12 +1,9 @@
 import 'package:flutter/material.dart';
 
-import '../../../../core/theme/app_theme.dart';
+import '../../../core/theme/app_theme.dart';
 import '../models/boost_selection_state.dart';
 import '../models/listing_model.dart';
 
-/// Screen 3: Shown after user taps "Boost Now".
-/// Displays confirmation, selected options with status badges,
-/// and a "Back to Listing" button.
 class SuccessPage extends StatelessWidget {
   final ListingModel listing;
   final BoostSelectionState state;
@@ -42,7 +39,6 @@ class SuccessPage extends StatelessWidget {
     );
   }
 
-  /// Animated success icon + title + subtitle
   Widget _buildSuccessHeader() {
     return Column(
       children: [
@@ -58,7 +54,7 @@ class SuccessPage extends StatelessWidget {
             ),
             boxShadow: [
               BoxShadow(
-                color: AppTheme.success.withOpacity(0.2),
+                color: AppTheme.success.withOpacity(0.25),
                 blurRadius: 30,
                 spreadRadius: 5,
               ),
@@ -94,21 +90,21 @@ class SuccessPage extends StatelessWidget {
     );
   }
 
-  /// Card showing the selected options with status chips
   Widget _buildOrderCard() {
     return Container(
       decoration: BoxDecoration(
         color: AppTheme.surface,
         borderRadius: BorderRadius.circular(AppTheme.radiusL),
         border: Border.all(color: AppTheme.border),
+        boxShadow: AppTheme.shadowSm,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Card header
           Padding(
             padding: const EdgeInsets.all(AppTheme.spaceM),
             child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 const Text(
                   'Boost Summary',
@@ -118,7 +114,6 @@ class SuccessPage extends StatelessWidget {
                     color: AppTheme.textPrimary,
                   ),
                 ),
-                const Spacer(),
                 Text(
                   '\$${state.totalPrice.toStringAsFixed(2)} total',
                   style: const TextStyle(
@@ -131,8 +126,6 @@ class SuccessPage extends StatelessWidget {
             ),
           ),
           const Divider(height: 1, color: AppTheme.border),
-
-          // Listing reference
           Padding(
             padding: const EdgeInsets.all(AppTheme.spaceM),
             child: Row(
@@ -146,29 +139,10 @@ class SuccessPage extends StatelessWidget {
                       colors: [Color(0xFF1A56DB), Color(0xFF60A5FA)],
                     ),
                   ),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(AppTheme.radiusS),
-                    child: Image.network(
-                      'https://images.unsplash.com/photo-1600585154340-be6161a56a0c',
-                      fit: BoxFit.cover,
-                      loadingBuilder: (context, child, loadingProgress) {
-                        if (loadingProgress == null) return child;
-                        return const Center(
-                          child: SizedBox(
-                            width: 14,
-                            height: 14,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          ),
-                        );
-                      },
-                      errorBuilder: (context, error, stackTrace) {
-                        return const Icon(
-                          Icons.broken_image,
-                          color: Colors.white70,
-                          size: 22,
-                        );
-                      },
-                    ),
+                  child: const Icon(
+                    Icons.home_rounded,
+                    color: Colors.white,
+                    size: 22,
                   ),
                 ),
                 const SizedBox(width: AppTheme.spaceM),
@@ -201,10 +175,7 @@ class SuccessPage extends StatelessWidget {
               ],
             ),
           ),
-
           const Divider(height: 1, color: AppTheme.border),
-
-          // Selected boost items with status badges
           Padding(
             padding: const EdgeInsets.all(AppTheme.spaceM),
             child: Column(
@@ -220,14 +191,10 @@ class SuccessPage extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: AppTheme.spaceS),
-                ...state.selectedLabels.map(
-                  (label) => _buildBoostLineItem(label),
-                ),
+                ...state.selectedItems.map((item) => _buildBoostLineItem(item)),
               ],
             ),
           ),
-
-          // Info footer
           Container(
             padding: const EdgeInsets.symmetric(
               horizontal: AppTheme.spaceM,
@@ -240,15 +207,15 @@ class SuccessPage extends StatelessWidget {
                 bottomRight: Radius.circular(AppTheme.radiusL),
               ),
             ),
-            child: Row(
+            child: const Row(
               children: [
-                const Icon(
+                Icon(
                   Icons.info_outline_rounded,
                   size: 14,
                   color: AppTheme.primary,
                 ),
-                const SizedBox(width: 6),
-                const Expanded(
+                SizedBox(width: 6),
+                Expanded(
                   child: Text(
                     'Boosts typically go live within 15 minutes',
                     style: TextStyle(fontSize: 12, color: AppTheme.primary),
@@ -262,11 +229,12 @@ class SuccessPage extends StatelessWidget {
     );
   }
 
-  Widget _buildBoostLineItem(String label) {
-    final isActive = label.contains('In-App') || label.contains('WhatsApp');
-    final statusLabel = isActive ? 'Active' : 'Pending';
-    final statusColor = isActive ? AppTheme.success : AppTheme.warning;
-    final statusBg = isActive ? AppTheme.successLight : AppTheme.warningLight;
+  Widget _buildBoostLineItem(SelectedBoostItem item) {
+    final color = item.isProcessingAuto ? AppTheme.success : AppTheme.warning;
+    final bg = item.isProcessingAuto
+        ? AppTheme.successLight
+        : AppTheme.warningLight;
+    final statusLabel = item.isProcessingAuto ? 'Active' : 'Pending';
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 6),
@@ -275,36 +243,56 @@ class SuccessPage extends StatelessWidget {
           Container(
             width: 8,
             height: 8,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: statusColor,
-            ),
+            decoration: BoxDecoration(shape: BoxShape.circle, color: color),
           ),
           const SizedBox(width: 10),
           Expanded(
-            child: Text(
-              label,
-              style: const TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
-                color: AppTheme.textPrimary,
-              ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  item.label,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: AppTheme.textPrimary,
+                  ),
+                ),
+                if (item.isRecurring)
+                  const Text(
+                    'Recurring',
+                    style: TextStyle(fontSize: 10, color: AppTheme.primary),
+                  ),
+              ],
             ),
           ),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-            decoration: BoxDecoration(
-              color: statusBg,
-              borderRadius: BorderRadius.circular(20),
-            ),
-            child: Text(
-              statusLabel,
-              style: TextStyle(
-                fontSize: 11,
-                fontWeight: FontWeight.w700,
-                color: statusColor,
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                decoration: BoxDecoration(
+                  color: bg,
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Text(
+                  statusLabel,
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    color: color,
+                  ),
+                ),
               ),
-            ),
+              const SizedBox(width: 8),
+              Text(
+                '\$${item.price.toStringAsFixed(2)}',
+                style: const TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: AppTheme.textSecondary,
+                ),
+              ),
+            ],
           ),
         ],
       ),
@@ -312,12 +300,22 @@ class SuccessPage extends StatelessWidget {
   }
 
   Widget _buildBackButton(BuildContext context) {
-    return SizedBox(
-      width: double.infinity,
-      child: ElevatedButton.icon(
-        onPressed: onBackToListing,
-        icon: const Icon(Icons.home_rounded, size: 18, color: AppTheme.accent),
-        label: const Text('Back to Listing'),
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(AppTheme.radiusM),
+        boxShadow: AppTheme.shadowPrimary,
+      ),
+      child: SizedBox(
+        width: double.infinity,
+        child: ElevatedButton.icon(
+          onPressed: onBackToListing,
+          icon: const Icon(
+            Icons.home_rounded,
+            size: 18,
+            color: AppTheme.accent,
+          ),
+          label: const Text('Back to Listing'),
+        ),
       ),
     );
   }

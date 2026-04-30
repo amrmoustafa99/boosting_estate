@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
 
-import '../../../../core/theme/app_theme.dart';
+import '../../../core/theme/app_theme.dart';
 import '../models/boost_option.dart';
 
-/// A horizontal row of selectable duration chips.
-/// Used inside the In-App Boost card to pick 3, 6, or 9 days.
 class DaysSelector extends StatelessWidget {
   final List<DurationOption> options;
   final DurationOption? selected;
@@ -19,16 +17,17 @@ class DaysSelector extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      children: options.map((option) {
-        final isSelected = selected?.days == option.days;
-        return Expanded(
-          child: GestureDetector(
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: Row(
+        children: options.map((option) {
+          final isSelected = selected?.days == option.days;
+          return GestureDetector(
             onTap: () => onSelect(option),
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 200),
-              margin: const EdgeInsets.symmetric(horizontal: 4),
-              padding: const EdgeInsets.symmetric(vertical: 10),
+              margin: const EdgeInsets.only(right: 8),
+              padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 14),
               decoration: BoxDecoration(
                 color: isSelected ? AppTheme.primary : AppTheme.background,
                 borderRadius: BorderRadius.circular(AppTheme.radiusS),
@@ -58,12 +57,23 @@ class DaysSelector extends StatelessWidget {
                           : AppTheme.textSecondary,
                     ),
                   ),
+                  const SizedBox(height: 2),
+                  Text(
+                    '${option.units} unit${option.units > 1 ? 's' : ''}',
+                    style: TextStyle(
+                      fontSize: 9,
+                      fontWeight: FontWeight.w600,
+                      color: isSelected
+                          ? Colors.white.withOpacity(0.65)
+                          : AppTheme.textHint,
+                    ),
+                  ),
                 ],
               ),
             ),
-          ),
-        );
-      }).toList(),
+          );
+        }).toList(),
+      ),
     );
   }
 }

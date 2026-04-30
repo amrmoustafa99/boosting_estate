@@ -1,12 +1,11 @@
 import 'package:flutter/material.dart';
 
-import '../../../../core/theme/app_theme.dart';
+import '../../../core/theme/app_theme.dart';
+import '../../../generated/assets.dart';
 import '../models/listing_model.dart';
 import 'boost_page.dart';
+import 'renew_page.dart';
 
-/// Screen 1: Shows mock listing details.
-/// If not boosted → shows "Boost Listing" button.
-/// If boosted → shows badge, remaining days, and "Extend Boost" button.
 class ListingPage extends StatefulWidget {
   const ListingPage({super.key});
 
@@ -15,23 +14,23 @@ class ListingPage extends StatefulWidget {
 }
 
 class _ListingPageState extends State<ListingPage> {
-  ListingModel _listing = ListingModel.mock;
-  final List<String> _images = [
-    'assets/images/listings/1.jpeg',
-    'assets/images/listings/22.jpeg',
-    'assets/images/listings/3.jpeg',
-    'assets/images/listings/4.jpeg',
-    'assets/images/listings/5.jpeg',
-    'assets/images/listings/1.jpeg',
-  ];
-
+  ListingModel _listing = ListingModel.newListing;
   int _currentImage = 0;
   final PageController _pageController = PageController();
+
+  List<String> get _images =>
+      _listing.images.isNotEmpty ? _listing.images : [Assets.listings1];
 
   void _onBoostSuccess() {
     setState(() {
       _listing = _listing.copyWith(isBoosted: true, boostRemainingDays: 9);
     });
+  }
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
   }
 
   @override
@@ -53,7 +52,9 @@ class _ListingPageState extends State<ListingPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _buildImagePlaceholder(),
+            _buildStateSwitcher(),
+            const SizedBox(height: AppTheme.spaceM),
+            _buildImageGallery(),
             const SizedBox(height: AppTheme.spaceM),
             _buildListingDetails(),
             const SizedBox(height: AppTheme.spaceM),
@@ -66,11 +67,97 @@ class _ListingPageState extends State<ListingPage> {
     );
   }
 
-  Widget _buildImagePlaceholder() {
+  // ── State Switcher ────────────────────────────────────────────
+
+  Widget _buildStateSwitcher() {
+    final states = [
+      ('New', ListingModel.newListing),
+      ('Active', ListingModel.activeListing),
+      ('Expiring', ListingModel.expiringSoonListing),
+      ('Expired', ListingModel.expiredListing),
+      ('Boosted', ListingModel.boostedListing),
+    ];
+
+    return Container(
+      padding: const EdgeInsets.all(AppTheme.spaceS),
+      decoration: BoxDecoration(
+        color: AppTheme.surface,
+        borderRadius: BorderRadius.circular(AppTheme.radiusL),
+        border: Border.all(color: AppTheme.border),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Padding(
+            padding: EdgeInsets.only(left: 4, bottom: 6),
+            child: Text(
+              'Preview State',
+              style: TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w700,
+                color: AppTheme.textSecondary,
+                letterSpacing: 0.5,
+              ),
+            ),
+          ),
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              children: states.map((s) {
+                final isActive =
+                    _listing.id == s.$2.id && _listing.status == s.$2.status;
+                return GestureDetector(
+                  onTap: () {
+                    setState(() {
+                      _listing = s.$2;
+                      _currentImage = 0;
+                    });
+                    if (_pageController.hasClients) {
+                      _pageController.jumpToPage(0);
+                    }
+                  },
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 180),
+                    margin: const EdgeInsets.only(right: 6),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 7,
+                    ),
+                    decoration: BoxDecoration(
+                      color: isActive ? AppTheme.primary : AppTheme.background,
+                      borderRadius: BorderRadius.circular(AppTheme.radiusS),
+                      border: Border.all(
+                        color: isActive ? AppTheme.primary : AppTheme.border,
+                      ),
+                    ),
+                    child: Text(
+                      s.$1,
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                        color: isActive ? Colors.white : AppTheme.textSecondary,
+                      ),
+                    ),
+                  ),
+                );
+              }).toList(),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ── Image Gallery ─────────────────────────────────────────────
+
+  Widget _buildImageGallery() {
+    final images = _images;
+
     return Column(
       children: [
         Stack(
           children: [
+            // Gallery
             Container(
               height: 260,
               width: double.infinity,
@@ -82,22 +169,27 @@ class _ListingPageState extends State<ListingPage> {
                 borderRadius: BorderRadius.circular(AppTheme.radiusL),
                 child: PageView.builder(
                   controller: _pageController,
-                  itemCount: _images.length,
-                  onPageChanged: (index) {
-                    setState(() => _currentImage = index);
-                  },
-                  itemBuilder: (context, index) {
-                    return Image.asset(
-                      _images[index],
-                      fit: BoxFit.cover,
-                      gaplessPlayback: true,
-                    );
-                  },
+                  itemCount: images.length,
+                  onPageChanged: (i) => setState(() => _currentImage = i),
+                  itemBuilder: (context, index) => Image.asset(
+                    images[index],
+                    fit: BoxFit.cover,
+                    errorBuilder: (_, __, ___) => Container(
+                      color: AppTheme.border,
+                      child: const Center(
+                        child: Icon(
+                          Icons.broken_image_rounded,
+                          size: 48,
+                          color: AppTheme.textHint,
+                        ),
+                      ),
+                    ),
+                  ),
                 ),
               ),
             ),
 
-            // BOOSTED badge
+            // Boosted badge
             if (_listing.isBoosted)
               Positioned(
                 top: 12,
@@ -110,6 +202,7 @@ class _ListingPageState extends State<ListingPage> {
                   decoration: BoxDecoration(
                     color: AppTheme.warning,
                     borderRadius: BorderRadius.circular(20),
+                    boxShadow: AppTheme.shadowMd,
                   ),
                   child: const Row(
                     mainAxisSize: MainAxisSize.min,
@@ -129,7 +222,11 @@ class _ListingPageState extends State<ListingPage> {
                 ),
               ),
 
-            // counter
+            // Status badge (non-boosted)
+            if (!_listing.isBoosted)
+              Positioned(top: 12, left: 12, child: _buildImageStatusBadge()),
+
+            // Image counter
             Positioned(
               bottom: 12,
               right: 12,
@@ -143,7 +240,7 @@ class _ListingPageState extends State<ListingPage> {
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Text(
-                  '${_currentImage + 1} / ${_images.length}',
+                  '${_currentImage + 1} / ${images.length}',
                   style: const TextStyle(
                     color: Colors.white,
                     fontSize: 12,
@@ -155,13 +252,12 @@ class _ListingPageState extends State<ListingPage> {
           ],
         ),
 
-        const SizedBox(height: 10),
-
         // Dots indicator
+        const SizedBox(height: 10),
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
-          children: List.generate(_images.length, (index) {
-            final isActive = index == _currentImage;
+          children: List.generate(images.length, (i) {
+            final isActive = i == _currentImage;
             return AnimatedContainer(
               duration: const Duration(milliseconds: 200),
               margin: const EdgeInsets.symmetric(horizontal: 3),
@@ -178,6 +274,59 @@ class _ListingPageState extends State<ListingPage> {
     );
   }
 
+  Widget _buildImageStatusBadge() {
+    Color color;
+    IconData icon;
+    String label;
+    switch (_listing.status) {
+      case ListingStatus.newListing:
+        color = AppTheme.primary;
+        icon = Icons.fiber_new_rounded;
+        label = 'NEW';
+        break;
+      case ListingStatus.active:
+        color = AppTheme.success;
+        icon = Icons.check_circle_rounded;
+        label = 'ACTIVE';
+        break;
+      case ListingStatus.expiringSoon:
+        color = AppTheme.warning;
+        icon = Icons.timer_rounded;
+        label = 'EXPIRING SOON';
+        break;
+      case ListingStatus.expired:
+        color = AppTheme.error;
+        icon = Icons.cancel_rounded;
+        label = 'EXPIRED';
+        break;
+    }
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+      decoration: BoxDecoration(
+        color: color,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: AppTheme.shadowSm,
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, color: Colors.white, size: 12),
+          const SizedBox(width: 4),
+          Text(
+            label,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 10,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ── Listing Details ───────────────────────────────────────────
+
   Widget _buildListingDetails() {
     return Container(
       padding: const EdgeInsets.all(AppTheme.spaceM),
@@ -185,6 +334,7 @@ class _ListingPageState extends State<ListingPage> {
         color: AppTheme.surface,
         borderRadius: BorderRadius.circular(AppTheme.radiusL),
         border: Border.all(color: AppTheme.border),
+        boxShadow: AppTheme.shadowSm,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -205,24 +355,7 @@ class _ListingPageState extends State<ListingPage> {
                 ),
               ),
               const SizedBox(width: 8),
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 10,
-                  vertical: 5,
-                ),
-                decoration: BoxDecoration(
-                  color: AppTheme.successLight,
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: const Text(
-                  'Active',
-                  style: TextStyle(
-                    color: AppTheme.success,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ),
+              _buildDetailStatusBadge(),
             ],
           ),
           const SizedBox(height: 6),
@@ -252,10 +385,84 @@ class _ListingPageState extends State<ListingPage> {
               color: AppTheme.primary,
             ),
           ),
+          if (_listing.remainingDays != null) ...[
+            const SizedBox(height: 6),
+            Row(
+              children: [
+                Icon(
+                  _listing.status == ListingStatus.expiringSoon
+                      ? Icons.timer_rounded
+                      : Icons.calendar_today_rounded,
+                  size: 13,
+                  color: _listing.status == ListingStatus.expiringSoon
+                      ? AppTheme.warning
+                      : AppTheme.textSecondary,
+                ),
+                const SizedBox(width: 4),
+                Text(
+                  _listing.remainingDays == 0
+                      ? 'Listing expired'
+                      : '${_listing.remainingDays} days remaining',
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: _listing.status == ListingStatus.expiringSoon
+                        ? AppTheme.warning
+                        : AppTheme.textSecondary,
+                  ),
+                ),
+              ],
+            ),
+          ],
         ],
       ),
     );
   }
+
+  Widget _buildDetailStatusBadge() {
+    Color color;
+    Color bg;
+    String label;
+    switch (_listing.status) {
+      case ListingStatus.newListing:
+        color = AppTheme.primary;
+        bg = AppTheme.primaryLight;
+        label = 'New';
+        break;
+      case ListingStatus.active:
+        color = AppTheme.success;
+        bg = AppTheme.successLight;
+        label = 'Active';
+        break;
+      case ListingStatus.expiringSoon:
+        color = AppTheme.warning;
+        bg = AppTheme.warningLight;
+        label = 'Expiring';
+        break;
+      case ListingStatus.expired:
+        color = AppTheme.error;
+        bg = AppTheme.errorLight;
+        label = 'Expired';
+        break;
+    }
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+      decoration: BoxDecoration(
+        color: bg,
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(
+          color: color,
+          fontSize: 12,
+          fontWeight: FontWeight.w700,
+        ),
+      ),
+    );
+  }
+
+  // ── Stats Row ─────────────────────────────────────────────────
 
   Widget _buildStatsRow() {
     return Row(
@@ -280,6 +487,7 @@ class _ListingPageState extends State<ListingPage> {
           color: AppTheme.surface,
           borderRadius: BorderRadius.circular(AppTheme.radiusM),
           border: Border.all(color: AppTheme.border),
+          boxShadow: AppTheme.shadowSm,
         ),
         child: Column(
           children: [
@@ -299,7 +507,12 @@ class _ListingPageState extends State<ListingPage> {
     );
   }
 
+  // ── Boost Section ─────────────────────────────────────────────
+
   Widget _buildBoostSection() {
+    if (_listing.status == ListingStatus.expired) {
+      return _buildExpiredSection();
+    }
     if (_listing.isBoosted) {
       return _buildBoostedSection();
     }
@@ -344,16 +557,12 @@ class _ListingPageState extends State<ListingPage> {
                   ),
                 ],
               ),
-
               const SizedBox(height: AppTheme.spaceS),
-
               const Text(
                 'Get 5x more views and sell faster',
                 style: TextStyle(fontSize: 15, color: AppTheme.textSecondary),
               ),
-
               const SizedBox(height: AppTheme.spaceS),
-
               Row(
                 children: [
                   const Icon(
@@ -378,25 +587,22 @@ class _ListingPageState extends State<ListingPage> {
           ),
         ),
         const SizedBox(height: AppTheme.spaceM),
-        SizedBox(
-          width: double.infinity,
-          child: ElevatedButton.icon(
-            onPressed: () {
-              Navigator.of(context).push(
-                MaterialPageRoute(
-                  builder: (_) => BoostPage(
-                    listing: _listing,
-                    onBoostSuccess: _onBoostSuccess,
-                  ),
-                ),
-              );
-            },
-            icon: const Icon(
-              Icons.rocket_launch_rounded,
-              size: 18,
-              color: AppTheme.accent,
+        Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(AppTheme.radiusM),
+            boxShadow: AppTheme.shadowPrimary,
+          ),
+          child: SizedBox(
+            width: double.infinity,
+            child: ElevatedButton.icon(
+              onPressed: _listing.canBoost ? _navigateToBoost : null,
+              icon: const Icon(
+                Icons.rocket_launch_rounded,
+                size: 18,
+                color: AppTheme.accent,
+              ),
+              label: const Text('Boost Listing'),
             ),
-            label: const Text('Boost Listing'),
           ),
         ),
       ],
@@ -410,6 +616,7 @@ class _ListingPageState extends State<ListingPage> {
         color: AppTheme.warningLight,
         borderRadius: BorderRadius.circular(AppTheme.radiusL),
         border: Border.all(color: AppTheme.warning.withOpacity(0.4)),
+        boxShadow: AppTheme.shadowSm,
       ),
       child: Column(
         children: [
@@ -474,16 +681,7 @@ class _ListingPageState extends State<ListingPage> {
           SizedBox(
             width: double.infinity,
             child: OutlinedButton.icon(
-              onPressed: () {
-                Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (_) => BoostPage(
-                      listing: _listing,
-                      onBoostSuccess: _onBoostSuccess,
-                    ),
-                  ),
-                );
-              },
+              onPressed: _navigateToBoost,
               icon: const Icon(Icons.add_rounded, size: 18),
               label: const Text('Extend Boost'),
               style: OutlinedButton.styleFrom(
@@ -497,6 +695,82 @@ class _ListingPageState extends State<ListingPage> {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildExpiredSection() {
+    return Container(
+      padding: const EdgeInsets.all(AppTheme.spaceM),
+      decoration: BoxDecoration(
+        color: AppTheme.errorLight,
+        borderRadius: BorderRadius.circular(AppTheme.radiusL),
+        border: Border.all(color: AppTheme.error.withOpacity(0.3)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Row(
+            children: [
+              Icon(Icons.cancel_rounded, color: AppTheme.error, size: 20),
+              SizedBox(width: 8),
+              Text(
+                'Listing Expired',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                  color: AppTheme.error,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          const Text(
+            'This listing has expired and cannot be boosted. Please renew it first.',
+            style: TextStyle(
+              fontSize: 13,
+              color: AppTheme.textSecondary,
+              height: 1.4,
+            ),
+          ),
+          const SizedBox(height: AppTheme.spaceM),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton.icon(
+              onPressed: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) => RenewPage(
+                      listing: _listing,
+                      onRenewSuccess: () {
+                        setState(() {
+                          _listing = _listing.copyWith(
+                            status: ListingStatus.active,
+                            remainingDays: 30,
+                          );
+                        });
+                      },
+                    ),
+                  ),
+                );
+              },
+              icon: const Icon(Icons.refresh_rounded, size: 18),
+              label: const Text('Renew Listing'),
+              style: ElevatedButton.styleFrom(backgroundColor: AppTheme.error),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ── Navigation ────────────────────────────────────────────────
+
+  void _navigateToBoost() {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) =>
+            BoostPage(listing: _listing, onBoostSuccess: _onBoostSuccess),
       ),
     );
   }
