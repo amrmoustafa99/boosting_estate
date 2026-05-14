@@ -1,84 +1,100 @@
 # Boost Listing Feature (Flutter)
 
-A clean and well-structured Flutter implementation of a Boosting System for real estate listings, designed to simulate real-world marketplace behavior.
-This project focuses on:
-- Clear user experience (UX)
-- Simple and intuitive UI
-- Clean and scalable code structure
+A clean and scalable Flutter implementation of a real estate boosting system designed to simulate real marketplace behavior with a modern Arabic-first user experience.
 
-> ⚠️ Note: This project uses mock data only (no backend or payment integration).
+The project focuses on:
 
----
+- Clean architecture and reusable widgets
+- Smooth and intuitive UX
+- Real-world boosting flow simulation
+- Dynamic pricing and eligibility validation
+- Professional UI inspired by production marketplace apps
 
-## Features
-
-Multiple boost services (In-App, Push, Instagram, WhatsApp)
-In-App boost with unit-based duration pricing (3-day units)
-Real-time total price calculation
-Multi-selection support with smart constraints (e.g. Push types)
-Slot-based scheduling (Push & WhatsApp)
-Eligibility validation with clear user feedback
-Order summary with dynamic updates
-Success flow with Active / Pending processing states
+> ⚠️ Note: This project uses mock/local data only. No backend, API, or payment gateway integration is included.
 
 ---
 
-## Screens
+# Features
 
-### 1. Listing Page
-Property details
-"Boost Listing" button (based on eligibility)
-Boost status (Active / Remaining days)
+## Listing Integration
+- Boost action accessed directly from the listing item
+- Listing data passed directly to the Boost page
+- Listing eligibility validation before boosting
+- Active boost state preview
 
-### 2. Boost Page
-Select one or multiple boost services
-Eligibility validation per card
-Duration + unit breakdown (In-App)
-Slot preview (Push / WhatsApp)
-Live pricing updates
-Sticky total summary
+## In-App Featured Boost
+- Minimum duration: 3 days
+- Duration increases in 3-day increments only
+- Dynamic pricing based on selected duration
+- Counter-based duration selector
+- Expiry validation against listing expiration date
+- Renew listing action when selected duration exceeds allowed limit
 
-### 3. Success Page
-Order summary
-Processing status (Active / Pending)
-Navigation back to listing
+## Push Notifications
+- Instant push notification boosting
+- Slot-based availability simulation
+- Daily-limit handling
+- Disabled state when daily quota is consumed
+- Clear Arabic status messaging
 
----
+## Instagram Promotion
+- Multiple promotion formats:
+  - Story
+  - Post
+  - Reel
+- Dynamic pricing
+- Multi-selection support
 
-## Screenshots
+## WhatsApp Promotion
+- Scheduled WhatsApp campaign simulation
+- Queue/slot availability handling
+- Validation and processing state simulation
 
-> Add your screenshots here after running the app
+## Pricing & Validation
+- Real-time total calculation
+- Smart selection constraints
+- Dynamic order summary
+- Multi-service support
+- Validation feedback with user-friendly messaging
 
-### Listing Page
-<img width="393" height="850" alt="image" src="https://github.com/user-attachments/assets/34caf5ef-7359-43cf-8270-365cc5c1f5cc" />
-
-### Boost Page
-<img width="396" height="851" alt="image" src="https://github.com/user-attachments/assets/11109f1b-590e-445d-a5f7-3e953feb4698" />
-<img width="390" height="855" alt="image" src="https://github.com/user-attachments/assets/57a62685-92f6-4403-8e33-70d9bcbb40fb" />
-<img width="394" height="845" alt="image" src="https://github.com/user-attachments/assets/a0501f90-1d72-4641-b4ff-48785e7950c6" />
-<img width="399" height="848" alt="image" src="https://github.com/user-attachments/assets/dbd9ea69-7cc5-4868-b755-4df1c0653050" />
-<img width="392" height="855" alt="image" src="https://github.com/user-attachments/assets/ab17f7e4-58aa-4b46-b9ae-49cf93be02b2" />
-<img width="395" height="849" alt="image" src="https://github.com/user-attachments/assets/6aaadf9a-e2c9-49bd-a351-ba28e0184951" />
-
-### Success Page
-<img width="393" height="846" alt="image" src="https://github.com/user-attachments/assets/fa3509a5-38b7-4b23-b257-60c42625f191" />
-
-### Boosted Active Page
-<img width="394" height="842" alt="image" src="https://github.com/user-attachments/assets/5cc9b5b4-1e37-4099-9357-5e65b351b165" />
-
-### For test Preview State
-### Expired State
-<img width="394" height="844" alt="image" src="https://github.com/user-attachments/assets/3784f9fb-49c7-4141-95fb-c78420940a1d" />
-
-### Expiring State
-<img width="400" height="854" alt="image" src="https://github.com/user-attachments/assets/532c74e1-0bc0-4b63-8cc7-555c3cba0043" />
-
-### Boosted State
-<img width="395" height="839" alt="image" src="https://github.com/user-attachments/assets/ed371704-90c8-48f6-b2e6-6eea9dc6fdbf" />
+## Success Flow
+- Processing states:
+  - Active
+  - Pending
+- Order summary preview
+- Navigation back to listing
 
 ---
 
-## Project Structure
+# Screens
+
+## 1. Listing Page
+- Property details
+- Boost button
+- Active boost status
+- Remaining boost days
+
+## 2. Boost Page
+- Multiple boost services
+- Duration selector
+- Eligibility validation
+- Disabled urgent state handling
+- Dynamic pricing summary
+- Sticky action button
+
+## 3. Success Page
+- Success confirmation
+- Boost order summary
+- Processing state
+- Return navigation
+
+---
+
+# Demo Video
+https://drive.google.com/file/d/1q0mP5RM5pIbhov2R8Vwu7SOF_C7saop1/view?usp=sharing
+
+
+# Project Structure
 
 ```bash
 lib/
@@ -86,19 +102,23 @@ lib/
 ├── core/
 │   └── theme/
 │       └── app_theme.dart
+│
 ├── features/
 │   └── boost/
 │       ├── models/
 │       │   ├── boost_option.dart
 │       │   ├── boost_selection_state.dart
 │       │   └── listing_model.dart
+│       │
 │       ├── services/
 │       │   └── boost_queue_service.dart
+│       │
 │       ├── views/
 │       │   ├── boost_page.dart
 │       │   ├── listing_page.dart
 │       │   ├── renew_page.dart
 │       │   └── success_page.dart
+│       │
 │       └── widgets/
 │           ├── boost_button.dart
 │           ├── days_selector.dart
@@ -107,5 +127,6 @@ lib/
 │           ├── price_summary.dart
 │           ├── push_notification_card.dart
 │           └── whatsapp_boost_card.dart
-├── generated/
-│   └── assets.dart
+│
+└── generated/
+    └── assets.dart
