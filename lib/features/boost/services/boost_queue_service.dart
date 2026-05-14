@@ -1,7 +1,18 @@
+/// أيام البث الافتراضية من إعدادات الأدمن (لا تظهر للمستخدم في التطبيق).
+const Set<int> kDefaultWhatsappCampaignWeekdays = {
+  DateTime.sunday,
+  DateTime.tuesday,
+  DateTime.thursday,
+};
+
 class PushSlotInfo {
   final DateTime nextNormalSlot;
   final double normalPrice;
   final bool urgentAvailable;
+
+  /// عند true: استُنفدت حصة التنبيه العاجل لهذا اليوم.
+  final bool urgentSoldOut;
+
   final double urgentPrice;
   final int normalSlotsLeft;
 
@@ -9,6 +20,7 @@ class PushSlotInfo {
     required this.nextNormalSlot,
     required this.normalPrice,
     required this.urgentAvailable,
+    required this.urgentSoldOut,
     required this.urgentPrice,
     required this.normalSlotsLeft,
   });
@@ -26,35 +38,54 @@ class WhatsAppSlotInfo {
   });
 }
 
-/// Mock queue service simulating admin-configured slot system
+/// يحاكي إعدادات الأدمن (مواعيد، أسعار بالدينار، حد التنبيه العاجل).
 class BoostQueueService {
   static final BoostQueueService instance = BoostQueueService._();
   BoostQueueService._();
 
+  /// عند true يُحاكي انتهاء الحصة اليومية للتنبيه العاجل. اتركها false للتجربة.
+  static bool simulateUrgentSoldOut = true;
+
+  static const int whatsappSendHour = 10;
+  static const int whatsappSendMinute = 0;
+
   PushSlotInfo getPushSlotInfo() {
     final now = DateTime.now();
-    // Next normal slot: tomorrow at 5 PM
-    final tomorrow = DateTime(now.year, now.month, now.day + 1, 17, 0);
+    final tomorrow = DateTime(now.year, now.month, now.day + 1, 21, 0);
     return PushSlotInfo(
       nextNormalSlot: tomorrow,
-      normalPrice: 4.99,
+      normalPrice: 3,
       urgentAvailable: true,
-      urgentPrice: 12.99,
+      urgentSoldOut: simulateUrgentSoldOut,
+      urgentPrice: 8,
       normalSlotsLeft: 3,
     );
   }
 
-  WhatsAppSlotInfo getWhatsAppSlotInfo() {
+  /// أقرب موعد بث (يستخدم أيام الحملة الافتراضية من إعدادات الأدمن فقط).
+  DateTime nextWhatsAppSlot() {
+    final days = kDefaultWhatsappCampaignWeekdays;
     final now = DateTime.now();
-    // Next WhatsApp slot: Friday at 7 PM
-    final daysUntilFriday = (DateTime.friday - now.weekday + 7) % 7;
-    final nextFriday = DateTime(
-      now.year,
-      now.month,
-      now.day + (daysUntilFriday == 0 ? 7 : daysUntilFriday),
-      19,
-      0,
+    for (var add = 0; add <= 14; add++) {
+      final d = DateTime(now.year, now.month, now.day + add);
+      final at = DateTime(
+        d.year,
+        d.month,
+        d.day,
+        whatsappSendHour,
+        whatsappSendMinute,
+      );
+      if (!at.isAfter(now)) continue;
+      if (days.contains(at.weekday)) return at;
+    }
+    return now.add(const Duration(days: 7));
+  }
+
+  WhatsAppSlotInfo getWhatsAppSlotInfo() {
+    return WhatsAppSlotInfo(
+      nextSlot: nextWhatsAppSlot(),
+      price: 2,
+      slotsLeft: 5,
     );
-    return WhatsAppSlotInfo(nextSlot: nextFriday, price: 6.99, slotsLeft: 5);
   }
 }

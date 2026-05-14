@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/formatting/app_currency.dart';
 import '../../../core/theme/app_theme.dart';
 import '../models/boost_selection_state.dart';
 import '../models/listing_model.dart';
@@ -68,7 +69,7 @@ class SuccessPage extends StatelessWidget {
         ),
         const SizedBox(height: AppTheme.spaceL),
         const Text(
-          'Boost Activated!',
+          'تم تفعيل التمييز!',
           style: TextStyle(
             fontSize: 26,
             fontWeight: FontWeight.w900,
@@ -78,7 +79,7 @@ class SuccessPage extends StatelessWidget {
         ),
         const SizedBox(height: 8),
         const Text(
-          'Your listing is now being promoted.\nSit back and watch the views roll in.',
+          'جاري تنفيذ طلبك. ستظهر خدمات الترويج خلال دقائق قليلة.',
           textAlign: TextAlign.center,
           style: TextStyle(
             fontSize: 14,
@@ -107,7 +108,7 @@ class SuccessPage extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 const Text(
-                  'Boost Summary',
+                  'ملخص التمييز',
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w800,
@@ -115,7 +116,7 @@ class SuccessPage extends StatelessWidget {
                   ),
                 ),
                 Text(
-                  '\$${state.totalPrice.toStringAsFixed(2)} total',
+                  '${formatKwd(state.totalPrice)} إجمالي',
                   style: const TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w800,
@@ -182,7 +183,7 @@ class SuccessPage extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const Text(
-                  'Active Boosts',
+                  'الخدمات المفعّلة',
                   style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w700,
@@ -217,7 +218,7 @@ class SuccessPage extends StatelessWidget {
                 SizedBox(width: 6),
                 Expanded(
                   child: Text(
-                    'Boosts typically go live within 15 minutes',
+                    'عادةً ما تُفعّل خدمات الترويج خلال 15 دقيقة',
                     style: TextStyle(fontSize: 12, color: AppTheme.primary),
                   ),
                 ),
@@ -234,7 +235,7 @@ class SuccessPage extends StatelessWidget {
     final bg = item.isProcessingAuto
         ? AppTheme.successLight
         : AppTheme.warningLight;
-    final statusLabel = item.isProcessingAuto ? 'Active' : 'Pending';
+    final statusLabel = item.isProcessingAuto ? 'نشط' : 'قيد الانتظار';
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 6),
@@ -260,7 +261,7 @@ class SuccessPage extends StatelessWidget {
                 ),
                 if (item.isRecurring)
                   const Text(
-                    'Recurring',
+                    'متكرر',
                     style: TextStyle(fontSize: 10, color: AppTheme.primary),
                   ),
               ],
@@ -285,7 +286,7 @@ class SuccessPage extends StatelessWidget {
               ),
               const SizedBox(width: 8),
               Text(
-                '\$${item.price.toStringAsFixed(2)}',
+                formatKwd(item.price),
                 style: const TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w600,
@@ -314,7 +315,7 @@ class SuccessPage extends StatelessWidget {
             size: 18,
             color: AppTheme.accent,
           ),
-          label: const Text('Back to Listing'),
+          label: const Text('العودة للإعلان'),
         ),
       ),
     );

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/formatting/app_currency.dart';
 import '../../../core/theme/app_theme.dart';
 import '../models/boost_selection_state.dart';
 
@@ -32,7 +33,7 @@ class PriceSummary extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             const Text(
-              'Order Summary',
+              'ملخص الطلب',
               style: TextStyle(
                 fontSize: 13,
                 fontWeight: FontWeight.w700,
@@ -51,7 +52,7 @@ class PriceSummary extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 const Text(
-                  'Total',
+                  'الإجمالي',
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w800,
@@ -59,7 +60,7 @@ class PriceSummary extends StatelessWidget {
                   ),
                 ),
                 Text(
-                  '\$${state.totalPrice.toStringAsFixed(2)}',
+                  formatKwd(state.totalPrice),
                   style: const TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.w800,
@@ -101,21 +102,21 @@ class PriceSummary extends StatelessWidget {
                   children: [
                     if (item.isRecurring)
                       _pill(
-                        'Recurring',
+                        'متكرر',
                         AppTheme.primaryLight,
                         AppTheme.primary,
                       ),
                     if (!item.isProcessingAuto)
-                      _pill('Manual', AppTheme.warningLight, AppTheme.warning),
+                      _pill('يدوي', AppTheme.warningLight, AppTheme.warning),
                     if (item.isProcessingAuto && !item.isRecurring)
-                      _pill('Auto', AppTheme.successLight, AppTheme.success),
+                      _pill('تلقائي', AppTheme.successLight, AppTheme.success),
                   ],
                 ),
               ],
             ),
           ),
           Text(
-            '\$${item.price.toStringAsFixed(2)}',
+            formatKwd(item.price),
             style: const TextStyle(
               fontSize: 13,
               fontWeight: FontWeight.w600,

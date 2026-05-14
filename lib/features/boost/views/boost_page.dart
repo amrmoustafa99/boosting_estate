@@ -10,11 +10,12 @@ import '../widgets/instagram_boost_card.dart';
 import '../widgets/price_summary.dart';
 import '../widgets/push_notification_card.dart';
 import '../widgets/whatsapp_boost_card.dart';
+import 'renew_page.dart';
 import 'success_page.dart';
 
 class BoostPage extends StatefulWidget {
   final ListingModel listing;
-  final VoidCallback onBoostSuccess;
+  final void Function(BoostSelectionState state) onBoostSuccess;
 
   const BoostPage({
     super.key,
@@ -38,10 +39,10 @@ class _BoostPageState extends State<BoostPage> {
     final status = widget.listing.status;
 
     if (status == ListingStatus.expiringSoon) {
-      return 'This boost is not available for expiring listings. Please renew your ad first.';
+      return 'هذا التعزيز غير متاح لإعلان على وشك الانتهاء. يرجى تجديد الإعلان أولاً.';
     }
     if (status == ListingStatus.expired) {
-      return 'Your listing has expired. Please renew it before boosting.';
+      return 'انتهى هذا الإعلان. يرجى تجديده قبل التعزيز.';
     }
     return null;
   }
@@ -63,7 +64,7 @@ class _BoostPageState extends State<BoostPage> {
           listing: widget.listing,
           state: _selectionState,
           onBackToListing: () {
-            widget.onBoostSuccess();
+            widget.onBoostSuccess(_selectionState);
             Navigator.of(context)
               ..pop()
               ..pop();
@@ -80,26 +81,23 @@ class _BoostPageState extends State<BoostPage> {
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppTheme.radiusL),
         ),
+        backgroundColor: AppTheme.errorLight,
         title: const Row(
           children: [
-            Icon(
-              Icons.warning_amber_rounded,
-              color: AppTheme.warning,
-              size: 22,
-            ),
+            Icon(Icons.warning_amber_rounded, color: AppTheme.error, size: 22),
             SizedBox(width: 8),
             Text(
-              'Cannot Continue',
+              'لا يمكن المتابعة',
               style: TextStyle(
                 fontSize: 17,
                 fontWeight: FontWeight.w700,
-                color: AppTheme.textPrimary,
+                color: AppTheme.error,
               ),
             ),
           ],
         ),
         content: const Text(
-          'Your ad has less time remaining than the selected sponsor duration. Renew your ad so you can proceed.',
+          'الوقت المتبقي لإعلانك أقل من مدة التعزيز التي اخترتها. جدّد الإعلان للمتابعة.',
           style: TextStyle(
             fontSize: 14,
             color: AppTheme.textSecondary,
@@ -110,19 +108,27 @@ class _BoostPageState extends State<BoostPage> {
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(),
             child: const Text(
-              'Cancel',
+              'إلغاء',
               style: TextStyle(color: AppTheme.textSecondary),
             ),
           ),
           ElevatedButton(
-            onPressed: () => Navigator.of(ctx).pop(),
+            onPressed: () {
+              Navigator.of(ctx).pop();
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (_) =>
+                      RenewPage(listing: widget.listing, onRenewSuccess: () {}),
+                ),
+              );
+            },
             style: ElevatedButton.styleFrom(
-              backgroundColor: AppTheme.warning,
+              backgroundColor: AppTheme.error,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(AppTheme.radiusS),
               ),
             ),
-            child: const Text('Renew Ad'),
+            child: const Text('تجديد الإعلان'),
           ),
         ],
       ),
@@ -134,7 +140,7 @@ class _BoostPageState extends State<BoostPage> {
     return Scaffold(
       backgroundColor: AppTheme.background,
       appBar: AppBar(
-        title: const Text('Boost Listing'),
+        title: const Text('تمييز الإعلان'),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 18),
           onPressed: () => Navigator.of(context).pop(),
@@ -177,6 +183,15 @@ class _BoostPageState extends State<BoostPage> {
           onStateChanged: _updateState,
           isEligible: _isEligible(option.type),
           ineligibilityReason: _ineligibilityReason(option.type),
+          listingRemainingDays: widget.listing.remainingDays,
+          onRenewListing: () {
+            Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (_) =>
+                    RenewPage(listing: widget.listing, onRenewSuccess: () {}),
+              ),
+            );
+          },
         );
       case BoostType.pushNotification:
         return PushNotificationCard(
@@ -285,7 +300,7 @@ class _BoostPageState extends State<BoostPage> {
                 Row(
                   children: [
                     Text(
-                      '\$${widget.listing.price.toStringAsFixed(0)}',
+                      '${widget.listing.price.toStringAsFixed(0)} د.ك',
                       style: const TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w800,
@@ -333,12 +348,12 @@ class _BoostPageState extends State<BoostPage> {
       ),
       child: Text(
         status == ListingStatus.newListing
-            ? 'New'
+            ? 'جديد'
             : status == ListingStatus.active
-            ? 'Active'
+            ? 'نشط'
             : status == ListingStatus.expiringSoon
-            ? 'Expiring'
-            : 'Expired',
+            ? 'ينتهي قريباً'
+            : 'منتهي',
         style: TextStyle(
           fontSize: 11,
           fontWeight: FontWeight.w700,
@@ -353,7 +368,7 @@ class _BoostPageState extends State<BoostPage> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Choose Boost Options',
+          'خدمات الترويج الاحترافية',
           style: TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.w800,
@@ -362,7 +377,7 @@ class _BoostPageState extends State<BoostPage> {
         ),
         SizedBox(height: 4),
         Text(
-          'Select one or more options to increase your listing visibility.',
+          'اجذب المزيد من المشترين — اختر الأدوات المناسبة لزيادة مشاهدات إعلانك.',
           style: TextStyle(
             fontSize: 13,
             color: AppTheme.textSecondary,

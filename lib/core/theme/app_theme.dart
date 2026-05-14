@@ -1,45 +1,48 @@
 import 'package:flutter/material.dart';
 
 class AppTheme {
-  //  Our Colors
-  static const Color primary = Color(0xFF1A56DB);
-  static const Color primaryLight = Color(0xFFEBF0FF);
-  static const Color primaryDark = Color(0xFF1240A8);
-  static const Color accent = Color(0xFFFF6B35);
-  static const Color success = Color(0xFF0BAD6F);
-  static const Color successLight = Color(0xFFE6F9F2);
-  static const Color warning = Color(0xFFF5A623);
-  static const Color warningLight = Color(0xFFFFF8EC);
-  static const Color error = Color(0xFFE53E3E);
-  static const Color errorLight = Color(0xFFFFF5F5);
-  static const Color gold = Color(0xFFD4A017);
-  static const Color goldLight = Color(0xFFFFF9E6);
+  static const Color primary = Color(0xFFF97316);
+  static const Color primaryLight = Color(0xFFFFF7ED);
+  static const Color primaryDark = Color(0xFFEA580C);
+
+  static const Color accent = Color(0xFF0EA5E9);
+
+  static const Color success = Color(0xFF16A34A);
+  static const Color successLight = Color(0xFFF0FDF4);
+  static const Color warning = Color(0xFFD97706);
+  static const Color warningLight = Color(0xFFFFFBEB);
+  static const Color error = Color(0xFFDC2626);
+  static const Color errorLight = Color(0xFFFEF2F2);
+  static const Color gold = Color(0xFFD97706);
+  static const Color goldLight = Color(0xFFFFFBEB);
+
+  // ── Social
   static const Color instagramPink = Color(0xFFE1306C);
   static const Color instagramPurple = Color(0xFF833AB4);
   static const Color whatsappGreen = Color(0xFF25D366);
   static const Color whatsappGreenLight = Color(0xFFE8FDF1);
 
-  // ── Neutrals ──────────────────────────────────────────────────
-  static const Color background = Color(0xFFF4F6FC);
+  static const Color background = Color(0xFFF8FAFC); // slate-50
   static const Color surface = Color(0xFFFFFFFF);
-  static const Color border = Color(0xFFE2E8F0);
-  static const Color textPrimary = Color(0xFF0F172A);
-  static const Color textSecondary = Color(0xFF64748B);
-  static const Color textHint = Color(0xFFADB5BD);
+  static const Color border = Color(0xFFE2E8F0); // slate-200
+  static const Color textPrimary = Color(0xFF1E293B); // slate-800
+  static const Color textSecondary = Color(0xFF64748B); // slate-500
+  static const Color textHint = Color(0xFFCBD5E1); // slate-300
 
-  // ── Spacing ───────────────────────────────────────────────────
+  // ── Spacing
   static const double spaceXS = 4.0;
   static const double spaceS = 8.0;
   static const double spaceM = 16.0;
   static const double spaceL = 24.0;
   static const double spaceXL = 32.0;
 
-  // ── Radius ────────────────────────────────────────────────────
+  // ── Radius
   static const double radiusS = 8.0;
   static const double radiusM = 12.0;
   static const double radiusL = 16.0;
   static const double radiusXL = 24.0;
 
+  // ── Shadows
   static List<BoxShadow> get shadowSm => [
     BoxShadow(
       color: Colors.black.withOpacity(0.06),
@@ -56,20 +59,20 @@ class AppTheme {
   ];
   static List<BoxShadow> get shadowPrimary => [
     BoxShadow(
-      color: primary.withOpacity(0.25),
+      color: primary.withOpacity(0.30),
       blurRadius: 20,
       offset: const Offset(0, 8),
     ),
   ];
   static List<BoxShadow> get shadowGold => [
     BoxShadow(
-      color: gold.withOpacity(0.3),
+      color: gold.withOpacity(0.30),
       blurRadius: 20,
       offset: const Offset(0, 8),
     ),
   ];
 
-  // ── ThemeData ─────────────────────────────────────────────────
+  // ── ThemeData
   static ThemeData get themeData => ThemeData(
     useMaterial3: true,
     colorScheme: ColorScheme.fromSeed(
@@ -92,7 +95,7 @@ class AppTheme {
     ),
     elevatedButtonTheme: ElevatedButtonThemeData(
       style: ElevatedButton.styleFrom(
-        backgroundColor: primary,
+        backgroundColor: primary, // orange button
         foregroundColor: Colors.white,
         elevation: 0,
         padding: const EdgeInsets.symmetric(vertical: 16),

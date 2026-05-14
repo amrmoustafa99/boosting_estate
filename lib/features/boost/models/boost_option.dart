@@ -8,13 +8,15 @@ class DurationOption {
 
   const DurationOption({required this.days, required this.price});
 
-  //   price per 3-day unit, calculated dynamically
   int get units => days ~/ 3;
   double get pricePerUnit => price / units;
 
-  /// lik:   "3 units × $3.33/unit"
-  String get unitBreakdown =>
-      '$units unit${units > 1 ? 's' : ''} × \$${pricePerUnit.toStringAsFixed(2)}/3-day unit';
+  /// عرض تفصيلي بالعربية (للشاشات التي تعرض وحدات الـ 3 أيام).
+  String get unitBreakdownAr {
+    final u = units;
+    final unitWord = u == 1 ? 'وحدة' : 'وحدات';
+    return '$u $unitWord × ${pricePerUnit.toStringAsFixed(2)} د.ك / 3 أيام';
+  }
 }
 
 class InstagramOption {
@@ -83,59 +85,52 @@ class BoostOptionsMockData {
     const BoostOption(
       id: 'in_app',
       type: BoostType.inApp,
-      title: 'In-App Featured Boost',
-      subtitle: 'Homepage & top of search results',
+      title: 'تمييز الإعلان داخل التطبيق',
+      subtitle: 'يظهر إعلانك في مقدمة نتائج البحث',
       iconAsset: 'rocket_launch',
-      durationOptions: [
-        DurationOption(days: 3, price: 9.99),
-        DurationOption(days: 6, price: 16.99),
-        DurationOption(days: 9, price: 22.99),
-        DurationOption(days: 12, price: 27.99),
-        DurationOption(days: 15, price: 31.99),
-      ],
     ),
     const BoostOption(
       id: 'push_notification',
       type: BoostType.pushNotification,
-      title: 'Push Notification',
-      subtitle: 'Sent to all nearby users instantly',
+      title: 'تنبيهات مباشرة (Push)',
+      subtitle: 'إرسال تنبيه فوري لآلاف المهتمين في منطقتك',
       iconAsset: 'notifications_active',
-      fixedPrice: 4.99,
+      fixedPrice: 3,
     ),
     const BoostOption(
       id: 'instagram',
       type: BoostType.instagram,
-      title: 'Instagram Boost',
-      subtitle: 'Promote your listing on Instagram',
+      title: 'ترويج انستقرام',
+      subtitle: 'نشر عبر حسابنا (57k+ متابع)',
       iconAsset: 'photo_camera',
       instagramOptions: [
         InstagramOption(
           format: InstagramFormat.story,
-          label: 'Story',
-          price: 7.99,
-          description: '24h visibility',
+          label: 'ستوري',
+          price: 2,
+          description: 'ظهور لمدة 24 ساعة',
         ),
         InstagramOption(
           format: InstagramFormat.post,
-          label: 'Post',
-          price: 12.99,
-          description: 'Permanent post',
+          label: 'بوست',
+          price: 5,
+          description: 'منشور دائم',
         ),
         InstagramOption(
           format: InstagramFormat.reel,
-          label: 'Reel',
-          price: 19.99,
-          description: 'Max reach',
+          label: 'ريلز',
+          price: 8,
+          description: 'أقصى انتشار',
         ),
       ],
     ),
     const BoostOption(
       id: 'whatsapp',
       type: BoostType.whatsapp,
-      title: 'WhatsApp Blast',
-      subtitle: 'Broadcast to active buyers in your area',
+      title: 'برودكاست واتساب',
+      subtitle: 'إرسال تفاصيل العقار إلى قوائم المشتركين المهتمين',
       iconAsset: 'chat_bubble',
-      fixedPrice: 6.99,
+      fixedPrice: 2,
     ),
   ];
 }

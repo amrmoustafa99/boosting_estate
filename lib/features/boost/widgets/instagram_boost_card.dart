@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
+import '../../../core/formatting/app_currency.dart';
 import '../../../core/theme/app_theme.dart';
 import '../models/boost_option.dart';
 import '../models/boost_selection_state.dart';
@@ -9,7 +11,6 @@ class InstagramBoostCard extends StatelessWidget {
   final BoostSelectionState state;
   final ValueChanged<BoostSelectionState> onStateChanged;
 
-  // ✅ FIX 2: eligibility params
   final bool isEligible;
   final String? ineligibilityReason;
 
@@ -130,14 +131,16 @@ class InstagramBoostCard extends StatelessWidget {
                 : AppTheme.background,
             borderRadius: BorderRadius.circular(AppTheme.radiusS),
           ),
-          child: Icon(
-            Icons.camera_alt_rounded,
-            color: isDisabled
-                ? AppTheme.textHint
-                : _isAnySelected
-                ? Colors.white
-                : AppTheme.instagramPink,
-            size: 22,
+          child: Center(
+            child: FaIcon(
+              FontAwesomeIcons.instagram,
+              color: isDisabled
+                  ? AppTheme.textHint
+                  : _isAnySelected
+                  ? Colors.white
+                  : AppTheme.instagramPink,
+              size: 22,
+            ),
           ),
         ),
         const SizedBox(width: AppTheme.spaceM),
@@ -175,7 +178,7 @@ class InstagramBoostCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.end,
           children: [
             Text(
-              'from \$${option.instagramOptions.first.price.toStringAsFixed(2)}',
+              'من ${formatKwd(option.instagramOptions.first.price)}',
               style: TextStyle(
                 fontSize: 13,
                 fontWeight: FontWeight.w700,
@@ -188,7 +191,7 @@ class InstagramBoostCard extends StatelessWidget {
             ),
             const SizedBox(height: 4),
             Text(
-              'Multi-select',
+              'اختيار متعدد',
               style: TextStyle(
                 fontSize: 10,
                 fontWeight: FontWeight.w600,
@@ -264,7 +267,7 @@ class InstagramBoostCard extends StatelessWidget {
                   ),
                   const SizedBox(height: 2),
                   Text(
-                    '\$${opt.price.toStringAsFixed(2)}',
+                    formatKwd(opt.price),
                     style: TextStyle(
                       fontSize: 11,
                       color: isSelected

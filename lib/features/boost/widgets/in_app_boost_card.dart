@@ -1,17 +1,22 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/formatting/app_currency.dart';
 import '../../../core/theme/app_theme.dart';
 import '../models/boost_option.dart';
 import '../models/boost_selection_state.dart';
-import 'days_selector.dart';
 
 class InAppBoostCard extends StatelessWidget {
   final BoostOption option;
   final BoostSelectionState state;
   final ValueChanged<BoostSelectionState> onStateChanged;
-
   final bool isEligible;
   final String? ineligibilityReason;
+
+  /// The number of days remaining on the listing (null = no expiry limit).
+  final int? listingRemainingDays;
+
+  /// Opens تجديد الإعلان (مثلاً [RenewPage]) عند الحاجة.
+  final VoidCallback? onRenewListing;
 
   const InAppBoostCard({
     super.key,
@@ -20,23 +25,76 @@ class InAppBoostCard extends StatelessWidget {
     required this.onStateChanged,
     this.isEligible = true,
     this.ineligibilityReason,
+    this.listingRemainingDays,
+    this.onRenewListing,
   });
 
+  static const int _step = 3;
+  static const int _minDays = 3;
+
   bool get _isSelected => state.selectedDuration != null;
+  int get _currentDays => state.selectedDuration?.days ?? _minDays;
+
+  /// 5 د.ك لكل 3 أيام
+  double _priceForDays(int days) {
+    const double kwdPerThreeDays = 5;
+    return (days / _step) * kwdPerThreeDays;
+  }
+
+  bool _exceedsListingLife(int days) {
+    if (listingRemainingDays == null) return false;
+    return days > listingRemainingDays!;
+  }
 
   void _handleTap() {
     if (!isEligible) return;
     if (_isSelected) {
       onStateChanged(state.copyWith(clearDuration: true));
     } else {
+      const days = _minDays;
       onStateChanged(
-        state.copyWith(selectedDuration: option.durationOptions.first),
+        state.copyWith(
+          selectedDuration: DurationOption(
+            days: days,
+            price: _priceForDays(days),
+          ),
+        ),
       );
     }
   }
 
+  void _increment() {
+    final newDays = _currentDays + _step;
+    onStateChanged(
+      state.copyWith(
+        selectedDuration: DurationOption(
+          days: newDays,
+          price: _priceForDays(newDays),
+        ),
+      ),
+    );
+  }
+
+  void _decrement() {
+    final newDays = _currentDays - _step;
+    if (newDays < _minDays) {
+      onStateChanged(state.copyWith(clearDuration: true));
+      return;
+    }
+    onStateChanged(
+      state.copyWith(
+        selectedDuration: DurationOption(
+          days: newDays,
+          price: _priceForDays(newDays),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    final exceeds = _isSelected && _exceedsListingLife(_currentDays);
+
     return AnimatedContainer(
       duration: const Duration(milliseconds: 220),
       decoration: BoxDecoration(
@@ -49,13 +107,15 @@ class InAppBoostCard extends StatelessWidget {
         border: Border.all(
           color: !isEligible
               ? AppTheme.border
+              : exceeds
+              ? AppTheme.warning
               : _isSelected
               ? AppTheme.primary
               : AppTheme.border,
           width: _isSelected && isEligible ? 2 : 1,
         ),
         boxShadow: _isSelected && isEligible
-            ? AppTheme.shadowPrimary
+            ? (exceeds ? AppTheme.shadowMd : AppTheme.shadowPrimary)
             : AppTheme.shadowSm,
       ),
       child: Material(
@@ -71,13 +131,21 @@ class InAppBoostCard extends StatelessWidget {
                 _buildHeader(),
                 if (!isEligible && ineligibilityReason != null) ...[
                   const SizedBox(height: AppTheme.spaceS),
-                  _buildIneligibilityBanner(),
+                  _buildBanner(
+                    ineligibilityReason!,
+                    AppTheme.errorLight,
+                    AppTheme.error,
+                  ),
                 ],
                 if (isEligible && _isSelected) ...[
                   const SizedBox(height: AppTheme.spaceM),
                   _buildPlacements(),
                   const SizedBox(height: AppTheme.spaceM),
-                  _buildDurationSection(),
+                  _buildDurationStepper(),
+                  if (exceeds) ...[
+                    const SizedBox(height: AppTheme.spaceS),
+                    _buildRenewalWarning(),
+                  ],
                 ],
               ],
             ),
@@ -87,32 +155,86 @@ class InAppBoostCard extends StatelessWidget {
     );
   }
 
-  Widget _buildIneligibilityBanner() {
+  Widget _buildBanner(String message, Color bg, Color fg) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
       decoration: BoxDecoration(
-        color: AppTheme.errorLight,
+        color: bg,
         borderRadius: BorderRadius.circular(AppTheme.radiusS),
-        border: Border.all(color: AppTheme.error.withOpacity(0.25)),
+        border: Border.all(color: fg.withOpacity(0.25)),
       ),
       child: Row(
         children: [
-          const Icon(
-            Icons.info_outline_rounded,
-            size: 14,
-            color: AppTheme.error,
-          ),
+          Icon(Icons.info_outline_rounded, size: 14, color: fg),
           const SizedBox(width: 6),
           Expanded(
             child: Text(
-              ineligibilityReason!,
-              style: const TextStyle(
-                fontSize: 12,
-                color: AppTheme.error,
-                height: 1.4,
-              ),
+              message,
+              style: TextStyle(fontSize: 12, color: fg, height: 1.4),
             ),
           ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildRenewalWarning() {
+    final remaining = listingRemainingDays;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+      decoration: BoxDecoration(
+        color: AppTheme.errorLight,
+        borderRadius: BorderRadius.circular(AppTheme.radiusS),
+        border: Border.all(color: AppTheme.error.withOpacity(0.4)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Icon(
+                Icons.warning_amber_rounded,
+                size: 16,
+                color: AppTheme.error,
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  remaining == null
+                      ? 'مدة التعزيز تتجاوز تاريخ انتهاء إعلانك. قلّل المدة أو جدّد الإعلان أولاً.'
+                      : 'مدة التعزيز تتجاوز تاريخ انتهاء إعلانك (متبقي $remaining ${remaining == 1 ? 'يوم' : 'أيام'}). قلّل المدة أو جدّد الإعلان.',
+                  style: const TextStyle(
+                    fontSize: 12,
+                    color: AppTheme.error,
+                    height: 1.4,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          if (onRenewListing != null) ...[
+            const SizedBox(height: 10),
+            Align(
+              alignment: AlignmentDirectional.centerEnd,
+              child: TextButton.icon(
+                onPressed: onRenewListing,
+                icon: const Icon(
+                  Icons.refresh_rounded,
+                  size: 18,
+                  color: AppTheme.error,
+                ),
+                label: const Text(
+                  'تجديد الإعلان',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w700,
+                    color: AppTheme.error,
+                  ),
+                ),
+              ),
+            ),
+          ],
         ],
       ),
     );
@@ -179,7 +301,7 @@ class InAppBoostCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.end,
           children: [
             Text(
-              'from \$${option.durationOptions.first.price.toStringAsFixed(2)}',
+              '${formatKwd(_priceForDays(_minDays))} / 3 أيام',
               style: TextStyle(
                 fontSize: 13,
                 fontWeight: FontWeight.w700,
@@ -221,7 +343,7 @@ class InAppBoostCard extends StatelessWidget {
   }
 
   Widget _buildPlacements() {
-    final placements = ['For Sale', 'For Rent', 'For Exchange'];
+    final placements = ['للبيع', 'للإيجار', 'للتبادل'];
     return Wrap(
       spacing: 6,
       runSpacing: 6,
@@ -259,67 +381,139 @@ class InAppBoostCard extends StatelessWidget {
     );
   }
 
-  Widget _buildDurationSection() {
+  Widget _buildDurationStepper() {
+    final days = _currentDays;
+    final price = _priceForDays(days);
+    final canDecrement = days > _minDays;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const Text(
-          'Select Duration',
+          'مدة التمييز',
           style: TextStyle(
             fontSize: 12,
             fontWeight: FontWeight.w600,
             color: AppTheme.textSecondary,
           ),
         ),
-        const SizedBox(height: 8),
-        DaysSelector(
-          options: option.durationOptions,
-          selected: state.selectedDuration,
-          onSelect: (d) => onStateChanged(state.copyWith(selectedDuration: d)),
+        const SizedBox(height: 10),
+        Row(
+          children: [
+            _stepButton(
+              icon: Icons.remove_rounded,
+              enabled: canDecrement,
+              onTap: _decrement,
+              isDestructive: !canDecrement,
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Container(
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                decoration: BoxDecoration(
+                  color: AppTheme.primary.withOpacity(0.07),
+                  borderRadius: BorderRadius.circular(AppTheme.radiusS),
+                  border: Border.all(color: AppTheme.primary.withOpacity(0.2)),
+                ),
+                child: Column(
+                  children: [
+                    Text(
+                      '$days يوم',
+                      style: const TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.w800,
+                        color: AppTheme.primary,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      formatKwd(price),
+                      style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w700,
+                        color: AppTheme.primary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(width: 12),
+            _stepButton(
+              icon: Icons.add_rounded,
+              enabled: true,
+              onTap: _increment,
+            ),
+          ],
         ),
-        if (state.selectedDuration != null) ...[
-          const SizedBox(height: 8),
-          _buildUnitPriceBreakdown(state.selectedDuration!),
-        ],
+        const SizedBox(height: 8),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+          decoration: BoxDecoration(
+            color: AppTheme.primary.withOpacity(0.05),
+            borderRadius: BorderRadius.circular(AppTheme.radiusS),
+            border: Border.all(color: AppTheme.primary.withOpacity(0.12)),
+          ),
+          child: Row(
+            children: [
+              const Icon(
+                Icons.info_outline_rounded,
+                size: 14,
+                color: AppTheme.primary,
+              ),
+              const SizedBox(width: 6),
+              Expanded(
+                child: Text(
+                  'السعر: ${formatKwd(5)} / 3 أيام',
+                  style: const TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                    color: AppTheme.primary,
+                  ),
+                ),
+              ),
+              Text(
+                'الإجمالي: ${formatKwd(price)}',
+                style: const TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w800,
+                  color: AppTheme.primary,
+                ),
+              ),
+            ],
+          ),
+        ),
       ],
     );
   }
 
-  Widget _buildUnitPriceBreakdown(DurationOption selected) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
-      decoration: BoxDecoration(
-        color: AppTheme.primary.withOpacity(0.06),
-        borderRadius: BorderRadius.circular(AppTheme.radiusS),
-        border: Border.all(color: AppTheme.primary.withOpacity(0.15)),
-      ),
-      child: Row(
-        children: [
-          const Icon(
-            Icons.calculate_outlined,
-            size: 14,
-            color: AppTheme.primary,
+  Widget _stepButton({
+    required IconData icon,
+    required bool enabled,
+    required VoidCallback onTap,
+    bool isDestructive = false,
+  }) {
+    final color = enabled
+        ? (isDestructive ? AppTheme.error : AppTheme.primary)
+        : AppTheme.textHint;
+    return GestureDetector(
+      onTap: enabled ? onTap : null,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 150),
+        width: 44,
+        height: 44,
+        decoration: BoxDecoration(
+          color: enabled
+              ? (isDestructive
+                    ? AppTheme.errorLight
+                    : AppTheme.primary.withOpacity(0.1))
+              : AppTheme.background,
+          borderRadius: BorderRadius.circular(AppTheme.radiusS),
+          border: Border.all(
+            color: enabled ? color.withOpacity(0.4) : AppTheme.border,
           ),
-          const SizedBox(width: 6),
-          Expanded(
-            child: Text(
-              selected.unitBreakdown,
-              style: const TextStyle(
-                fontSize: 11,
-                fontWeight: FontWeight.w600,
-                color: AppTheme.primary,
-              ),
-            ),
-          ),
-          Text(
-            'Total: \$${selected.price.toStringAsFixed(2)}',
-            style: const TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w800,
-              color: AppTheme.primary,
-            ),
-          ),
-        ],
+        ),
+        child: Icon(icon, color: color, size: 22),
       ),
     );
   }

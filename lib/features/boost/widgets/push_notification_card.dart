@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:intl/intl.dart';
 
+import '../../../core/formatting/app_currency.dart';
 import '../../../core/theme/app_theme.dart';
 import '../models/boost_option.dart';
 import '../models/boost_selection_state.dart';
@@ -24,8 +26,9 @@ class PushNotificationCard extends StatelessWidget {
   });
 
   bool get _isNormalSelected => state.pushSelected;
-  bool get _isUrgentSelected => state.urgentPushSelected;
-  bool get _isAnySelected => _isNormalSelected || _isUrgentSelected;
+
+  bool _urgentVisuallySelected(PushSlotInfo info) =>
+      state.urgentPushSelected && !info.urgentSoldOut;
 
   @override
   Widget build(BuildContext context) {
@@ -36,7 +39,7 @@ class PushNotificationCard extends StatelessWidget {
       children: [
         _buildNormalCard(slotLabel, info.normalSlotsLeft, info.normalPrice),
         const SizedBox(height: AppTheme.spaceS),
-        if (info.urgentAvailable) _buildUrgentCard(info.urgentPrice),
+        _buildUrgentCard(info),
       ],
     );
   }
@@ -129,14 +132,16 @@ class PushNotificationCard extends StatelessWidget {
                             : AppTheme.background,
                         borderRadius: BorderRadius.circular(AppTheme.radiusS),
                       ),
-                      child: Icon(
-                        Icons.notifications_active_rounded,
-                        color: !isEligible
-                            ? AppTheme.textHint
-                            : _isNormalSelected
-                            ? Colors.white
-                            : AppTheme.primary,
-                        size: 22,
+                      child: Center(
+                        child: FaIcon(
+                          FontAwesomeIcons.bell,
+                          color: !isEligible
+                              ? AppTheme.textHint
+                              : _isNormalSelected
+                              ? Colors.white
+                              : AppTheme.primary,
+                          size: 20,
+                        ),
                       ),
                     ),
                     const SizedBox(width: AppTheme.spaceM),
@@ -173,7 +178,7 @@ class PushNotificationCard extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
                         Text(
-                          '\$${price.toStringAsFixed(2)}',
+                          formatKwd(price),
                           style: TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.w700,
@@ -226,149 +231,181 @@ class PushNotificationCard extends StatelessWidget {
     );
   }
 
-  Widget _buildUrgentCard(double price) {
+  Widget _buildUrgentCard(PushSlotInfo info) {
     if (!isEligible) return const SizedBox.shrink();
+
+    final soldOut = info.urgentSoldOut;
+    final urgentOn = _urgentVisuallySelected(info);
 
     return AnimatedContainer(
       duration: const Duration(milliseconds: 220),
       decoration: BoxDecoration(
-        gradient: _isUrgentSelected
-            ? const LinearGradient(
-                colors: [Color(0xFFB8860B), Color(0xFFD4A017)],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              )
-            : null,
-        color: _isUrgentSelected ? null : AppTheme.goldLight,
+        color: soldOut ? AppTheme.background : AppTheme.goldLight,
         borderRadius: BorderRadius.circular(AppTheme.radiusL),
         border: Border.all(
-          color: _isUrgentSelected
+          color: soldOut
+              ? AppTheme.border
+              : urgentOn
               ? AppTheme.gold
               : AppTheme.gold.withOpacity(0.4),
-          width: _isUrgentSelected ? 2 : 1,
+          width: urgentOn && !soldOut ? 2 : 1,
         ),
-        boxShadow: _isUrgentSelected ? AppTheme.shadowGold : [],
+        boxShadow: urgentOn && !soldOut ? AppTheme.shadowGold : [],
       ),
       child: Material(
         color: Colors.transparent,
         child: InkWell(
           borderRadius: BorderRadius.circular(AppTheme.radiusL),
-          onTap: () {
-            final newUrgent = !_isUrgentSelected;
-            onStateChanged(
-              state.copyWith(
-                urgentPushSelected: newUrgent,
-                pushSelected: newUrgent ? false : state.pushSelected,
-              ),
-            );
-          },
-          child: Padding(
-            padding: const EdgeInsets.all(AppTheme.spaceM),
-            child: Row(
-              children: [
-                Container(
-                  width: 46,
-                  height: 46,
-                  decoration: BoxDecoration(
-                    color: _isUrgentSelected
-                        ? Colors.white.withOpacity(0.2)
-                        : AppTheme.gold.withOpacity(0.15),
-                    borderRadius: BorderRadius.circular(AppTheme.radiusS),
+          onTap: soldOut
+              ? null
+              : () {
+                  final newUrgent = !state.urgentPushSelected;
+                  onStateChanged(
+                    state.copyWith(
+                      urgentPushSelected: newUrgent,
+                      pushSelected: newUrgent ? false : state.pushSelected,
+                    ),
+                  );
+                },
+          child: Opacity(
+            opacity: soldOut ? 0.55 : 1.0,
+            child: Padding(
+              padding: const EdgeInsets.all(AppTheme.spaceM),
+              child: Row(
+                children: [
+                  Container(
+                    width: 46,
+                    height: 46,
+                    decoration: BoxDecoration(
+                      color: soldOut
+                          ? AppTheme.border
+                          : AppTheme.gold.withOpacity(0.15),
+                      borderRadius: BorderRadius.circular(AppTheme.radiusS),
+                    ),
+                    child: Center(
+                      child: FaIcon(
+                        FontAwesomeIcons.bolt,
+                        color: soldOut ? AppTheme.textHint : AppTheme.gold,
+                        size: 22,
+                      ),
+                    ),
                   ),
-                  child: Icon(
-                    Icons.bolt_rounded,
-                    color: _isUrgentSelected ? Colors.white : AppTheme.gold,
-                    size: 24,
-                  ),
-                ),
-                const SizedBox(width: AppTheme.spaceM),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Text(
-                            'Urgent Push',
-                            style: TextStyle(
-                              fontSize: 15,
-                              fontWeight: FontWeight.w700,
-                              color: _isUrgentSelected
-                                  ? Colors.white
-                                  : const Color(0xFFB8860B),
-                            ),
-                          ),
-                          const SizedBox(width: 6),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 6,
-                              vertical: 2,
-                            ),
-                            decoration: BoxDecoration(
-                              color: _isUrgentSelected
-                                  ? Colors.white.withOpacity(0.2)
-                                  : AppTheme.gold.withOpacity(0.2),
-                              borderRadius: BorderRadius.circular(99),
-                            ),
-                            child: Text(
-                              'PREMIUM',
+                  const SizedBox(width: AppTheme.spaceM),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Text(
+                              'إشعار عاجل',
                               style: TextStyle(
-                                fontSize: 9,
-                                fontWeight: FontWeight.w800,
-                                color: _isUrgentSelected
-                                    ? Colors.white
+                                fontSize: 15,
+                                fontWeight: FontWeight.w700,
+                                color: soldOut
+                                    ? AppTheme.textHint
                                     : const Color(0xFFB8860B),
                               ),
                             ),
+                            const SizedBox(width: 6),
+                            if (soldOut)
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 8,
+                                  vertical: 2,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: AppTheme.errorLight,
+                                  borderRadius: BorderRadius.circular(99),
+                                ),
+                                child: const Text(
+                                  'نفد اليوم',
+                                  style: TextStyle(
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.w700,
+                                    color: AppTheme.error,
+                                  ),
+                                ),
+                              )
+                            else
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 6,
+                                  vertical: 2,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: AppTheme.gold.withOpacity(0.2),
+                                  borderRadius: BorderRadius.circular(99),
+                                ),
+                                child: Text(
+                                  'مميز',
+                                  style: TextStyle(
+                                    fontSize: 9,
+                                    fontWeight: FontWeight.w800,
+                                    color: urgentOn
+                                        ? AppTheme.gold
+                                        : const Color(0xFFB8860B),
+                                  ),
+                                ),
+                              ),
+                          ],
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          soldOut
+                              ? 'استُنفدت الحصة اليومية — يُفتح غداً'
+                              : 'يُرسل خلال ساعتين — اليوم',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: soldOut
+                                ? AppTheme.textHint
+                                : AppTheme.textSecondary,
                           ),
-                        ],
-                      ),
-                      const SizedBox(height: 2),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: AppTheme.spaceS),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
                       Text(
-                        'Sent within 2 hours · Today',
+                        formatKwd(info.urgentPrice),
                         style: TextStyle(
-                          fontSize: 12,
-                          color: _isUrgentSelected
-                              ? Colors.white.withOpacity(0.85)
-                              : AppTheme.textSecondary,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w700,
+                          color: soldOut
+                              ? AppTheme.textHint
+                              : const Color(0xFFB8860B),
                         ),
                       ),
+                      const SizedBox(height: 4),
+                      soldOut
+                          ? const Icon(
+                              Icons.lock_outline_rounded,
+                              color: AppTheme.textHint,
+                              size: 20,
+                            )
+                          : AnimatedSwitcher(
+                              duration: const Duration(milliseconds: 200),
+                              child: urgentOn
+                                  ? const Icon(
+                                      Icons.check_circle_rounded,
+                                      color: AppTheme.gold,
+                                      size: 20,
+                                      key: ValueKey('on'),
+                                    )
+                                  : Icon(
+                                      Icons.radio_button_unchecked_rounded,
+                                      color: AppTheme.gold.withOpacity(0.5),
+                                      size: 20,
+                                      key: const ValueKey('off'),
+                                    ),
+                            ),
                     ],
                   ),
-                ),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    Text(
-                      '\$${price.toStringAsFixed(2)}',
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w700,
-                        color: _isUrgentSelected
-                            ? Colors.white
-                            : const Color(0xFFB8860B),
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    AnimatedSwitcher(
-                      duration: const Duration(milliseconds: 200),
-                      child: _isUrgentSelected
-                          ? const Icon(
-                              Icons.check_circle_rounded,
-                              color: Colors.white,
-                              size: 20,
-                              key: ValueKey('on'),
-                            )
-                          : Icon(
-                              Icons.radio_button_unchecked_rounded,
-                              color: AppTheme.gold.withOpacity(0.5),
-                              size: 20,
-                              key: const ValueKey('off'),
-                            ),
-                    ),
-                  ],
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ),
@@ -393,7 +430,7 @@ class PushNotificationCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const Text(
-                  'Next Available Slot',
+                  'أقرب موعد متاح',
                   style: TextStyle(
                     fontSize: 11,
                     color: AppTheme.textSecondary,
@@ -418,7 +455,7 @@ class PushNotificationCard extends StatelessWidget {
               borderRadius: BorderRadius.circular(99),
             ),
             child: Text(
-              '$slotsLeft slots left',
+              slotsLeft == 1 ? 'طلب واحد متبقي' : '$slotsLeft طلبات متبقية',
               style: const TextStyle(
                 fontSize: 10,
                 fontWeight: FontWeight.w600,
@@ -434,9 +471,10 @@ class PushNotificationCard extends StatelessWidget {
   String _formatSlot(DateTime dt) {
     final now = DateTime.now();
     final diff = dt.difference(now);
-    if (diff.inDays == 0) return 'Today - ${DateFormat('h:mm a').format(dt)}';
-    if (diff.inDays == 1)
-      return 'Tomorrow - ${DateFormat('h:mm a').format(dt)}';
-    return '${DateFormat('EEEE').format(dt)} - ${DateFormat('h:mm a').format(dt)}';
+    final time = DateFormat('jm', 'ar').format(dt);
+    final dayName = DateFormat('EEEE', 'ar').format(dt);
+    if (diff.inDays == 0) return 'اليوم — $time';
+    if (diff.inDays == 1) return 'غداً — $time';
+    return '$dayName — $time';
   }
 }

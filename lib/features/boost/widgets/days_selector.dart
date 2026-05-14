@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/formatting/app_currency.dart';
 import '../../../core/theme/app_theme.dart';
 import '../models/boost_option.dart';
 
@@ -39,7 +40,7 @@ class DaysSelector extends StatelessWidget {
               child: Column(
                 children: [
                   Text(
-                    '${option.days}d',
+                    '${option.days} يوم',
                     style: TextStyle(
                       fontSize: 15,
                       fontWeight: FontWeight.w700,
@@ -48,7 +49,7 @@ class DaysSelector extends StatelessWidget {
                   ),
                   const SizedBox(height: 2),
                   Text(
-                    '\$${option.price.toStringAsFixed(2)}',
+                    formatKwd(option.price),
                     style: TextStyle(
                       fontSize: 11,
                       fontWeight: FontWeight.w500,
@@ -58,16 +59,6 @@ class DaysSelector extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 2),
-                  Text(
-                    '${option.units} unit${option.units > 1 ? 's' : ''}',
-                    style: TextStyle(
-                      fontSize: 9,
-                      fontWeight: FontWeight.w600,
-                      color: isSelected
-                          ? Colors.white.withOpacity(0.65)
-                          : AppTheme.textHint,
-                    ),
-                  ),
                 ],
               ),
             ),

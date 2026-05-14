@@ -31,20 +31,19 @@ class ListingModel {
     this.images = const [],
   });
 
-  // ✅ FIX 1: expiringSoon removed — only new & active listings can be boosted
   bool get canBoost =>
       status == ListingStatus.newListing || status == ListingStatus.active;
 
   String get statusLabel {
     switch (status) {
       case ListingStatus.newListing:
-        return 'New';
+        return 'جديد';
       case ListingStatus.active:
-        return 'Active';
+        return 'نشط';
       case ListingStatus.expiringSoon:
-        return 'Expiring Soon';
+        return 'ينتهي قريباً';
       case ListingStatus.expired:
-        return 'Expired';
+        return 'منتهي';
     }
   }
 
@@ -74,8 +73,8 @@ class ListingModel {
   // ── Mock States ───────────────────────────────────────────────
   static const newListing = ListingModel(
     id: 'listing_001',
-    title: 'Modern Villa with Sea View',
-    location: 'Hurghada, Red Sea, Egypt',
+    title: 'فيلا للبيع — الخيران',
+    location: 'الخيران، الكويت',
     price: 285000,
     bedrooms: 4,
     bathrooms: 3,
@@ -86,9 +85,9 @@ class ListingModel {
 
   static const activeListing = ListingModel(
     id: 'listing_002',
-    title: 'Luxury Penthouse Downtown',
-    location: 'New Cairo, Cairo, Egypt',
-    price: 520000,
+    title: 'دوبلكس فاخر — مدينة الكويت',
+    location: 'شرق، مدينة الكويت',
+    price: 195000,
     bedrooms: 3,
     bathrooms: 2,
     areaSqft: 1800,
@@ -99,9 +98,9 @@ class ListingModel {
 
   static const expiringSoonListing = ListingModel(
     id: 'listing_003',
-    title: 'Cozy Studio Near Beach',
-    location: 'Ain Sokhna, Suez, Egypt',
-    price: 85000,
+    title: 'استوديو مفروش — الفحيحيل',
+    location: 'الفحيحيل، الأحمدي، الكويت',
+    price: 32000,
     bedrooms: 1,
     bathrooms: 1,
     areaSqft: 650,
@@ -112,9 +111,9 @@ class ListingModel {
 
   static const expiredListing = ListingModel(
     id: 'listing_004',
-    title: 'Family Apartment with Garden',
-    location: 'Maadi, Cairo, Egypt',
-    price: 175000,
+    title: 'شقة عائلية — الجابرية',
+    location: 'الجابرية، محافظة حولي، الكويت',
+    price: 92000,
     bedrooms: 3,
     bathrooms: 2,
     areaSqft: 1400,
@@ -125,8 +124,8 @@ class ListingModel {
 
   static const boostedListing = ListingModel(
     id: 'listing_005',
-    title: 'Modern Villa with Sea View',
-    location: 'Hurghada, Red Sea, Egypt',
+    title: 'فيلا للبيع — الخيران',
+    location: 'الخيران، الكويت',
     price: 285000,
     bedrooms: 4,
     bathrooms: 3,

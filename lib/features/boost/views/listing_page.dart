@@ -2,28 +2,44 @@ import 'package:flutter/material.dart';
 
 import '../../../core/theme/app_theme.dart';
 import '../../../generated/assets.dart';
+import '../models/boost_selection_state.dart';
 import '../models/listing_model.dart';
 import 'boost_page.dart';
 import 'renew_page.dart';
 
 class ListingPage extends StatefulWidget {
-  const ListingPage({super.key});
+  /// The listing to display. In production this comes from the previous screen.
+  final ListingModel listing;
+
+  const ListingPage({super.key, required this.listing});
 
   @override
   State<ListingPage> createState() => _ListingPageState();
 }
 
 class _ListingPageState extends State<ListingPage> {
-  ListingModel _listing = ListingModel.newListing;
+  late ListingModel _listing;
   int _currentImage = 0;
   final PageController _pageController = PageController();
+
+  @override
+  void initState() {
+    super.initState();
+    _listing = widget.listing;
+  }
 
   List<String> get _images =>
       _listing.images.isNotEmpty ? _listing.images : [Assets.listings1];
 
-  void _onBoostSuccess() {
+  void _onBoostSuccess(BoostSelectionState state) {
     setState(() {
-      _listing = _listing.copyWith(isBoosted: true, boostRemainingDays: 9);
+      final featuredDays = state.selectedDuration?.days;
+      if (featuredDays != null) {
+        _listing = _listing.copyWith(
+          isBoosted: true,
+          boostRemainingDays: featuredDays,
+        );
+      }
     });
   }
 
@@ -38,7 +54,7 @@ class _ListingPageState extends State<ListingPage> {
     return Scaffold(
       backgroundColor: AppTheme.background,
       appBar: AppBar(
-        title: const Text('My Listing'),
+        title: const Text('تفاصيل الإعلان'),
         leading: const Icon(Icons.arrow_back_ios_new_rounded, size: 18),
         actions: [
           IconButton(
@@ -52,7 +68,7 @@ class _ListingPageState extends State<ListingPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _buildStateSwitcher(),
+            _buildPromotionHint(),
             const SizedBox(height: AppTheme.spaceM),
             _buildImageGallery(),
             const SizedBox(height: AppTheme.spaceM),
@@ -67,80 +83,29 @@ class _ListingPageState extends State<ListingPage> {
     );
   }
 
-  // ── State Switcher ────────────────────────────────────────────
-
-  Widget _buildStateSwitcher() {
-    final states = [
-      ('New', ListingModel.newListing),
-      ('Active', ListingModel.activeListing),
-      ('Expiring', ListingModel.expiringSoonListing),
-      ('Expired', ListingModel.expiredListing),
-      ('Boosted', ListingModel.boostedListing),
-    ];
-
+  Widget _buildPromotionHint() {
     return Container(
-      padding: const EdgeInsets.all(AppTheme.spaceS),
+      width: double.infinity,
+      padding: const EdgeInsets.all(AppTheme.spaceM),
       decoration: BoxDecoration(
-        color: AppTheme.surface,
+        color: AppTheme.accent.withOpacity(0.08),
         borderRadius: BorderRadius.circular(AppTheme.radiusL),
-        border: Border.all(color: AppTheme.border),
+        border: Border.all(color: AppTheme.accent.withOpacity(0.25)),
       ),
-      child: Column(
+      child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Padding(
-            padding: EdgeInsets.only(left: 4, bottom: 6),
+          Icon(Icons.auto_awesome_rounded, color: AppTheme.accent, size: 22),
+          const SizedBox(width: AppTheme.spaceS),
+          Expanded(
             child: Text(
-              'Preview State',
+              'لتمييز إعلانك أو تمديد التمييز استخدم «تمييز الإعلان» أدناه، أو انتقل من قائمة إعلاناتك عبر أيقونة التمييز.',
               style: TextStyle(
-                fontSize: 11,
-                fontWeight: FontWeight.w700,
-                color: AppTheme.textSecondary,
-                letterSpacing: 0.5,
+                fontSize: 13,
+                height: 1.45,
+                color: AppTheme.textPrimary.withOpacity(0.9),
+                fontWeight: FontWeight.w600,
               ),
-            ),
-          ),
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: Row(
-              children: states.map((s) {
-                final isActive =
-                    _listing.id == s.$2.id && _listing.status == s.$2.status;
-                return GestureDetector(
-                  onTap: () {
-                    setState(() {
-                      _listing = s.$2;
-                      _currentImage = 0;
-                    });
-                    if (_pageController.hasClients) {
-                      _pageController.jumpToPage(0);
-                    }
-                  },
-                  child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 180),
-                    margin: const EdgeInsets.only(right: 6),
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 7,
-                    ),
-                    decoration: BoxDecoration(
-                      color: isActive ? AppTheme.primary : AppTheme.background,
-                      borderRadius: BorderRadius.circular(AppTheme.radiusS),
-                      border: Border.all(
-                        color: isActive ? AppTheme.primary : AppTheme.border,
-                      ),
-                    ),
-                    child: Text(
-                      s.$1,
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w700,
-                        color: isActive ? Colors.white : AppTheme.textSecondary,
-                      ),
-                    ),
-                  ),
-                );
-              }).toList(),
             ),
           ),
         ],
@@ -157,7 +122,6 @@ class _ListingPageState extends State<ListingPage> {
       children: [
         Stack(
           children: [
-            // Gallery
             Container(
               height: 260,
               width: double.infinity,
@@ -189,7 +153,6 @@ class _ListingPageState extends State<ListingPage> {
               ),
             ),
 
-            // Boosted badge
             if (_listing.isBoosted)
               Positioned(
                 top: 12,
@@ -210,7 +173,7 @@ class _ListingPageState extends State<ListingPage> {
                       Icon(Icons.bolt, color: Colors.white, size: 14),
                       SizedBox(width: 4),
                       Text(
-                        'BOOSTED',
+                        'مميز',
                         style: TextStyle(
                           color: Colors.white,
                           fontSize: 11,
@@ -222,11 +185,9 @@ class _ListingPageState extends State<ListingPage> {
                 ),
               ),
 
-            // Status badge (non-boosted)
             if (!_listing.isBoosted)
               Positioned(top: 12, left: 12, child: _buildImageStatusBadge()),
 
-            // Image counter
             Positioned(
               bottom: 12,
               right: 12,
@@ -252,7 +213,6 @@ class _ListingPageState extends State<ListingPage> {
           ],
         ),
 
-        // Dots indicator
         const SizedBox(height: 10),
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -282,22 +242,22 @@ class _ListingPageState extends State<ListingPage> {
       case ListingStatus.newListing:
         color = AppTheme.primary;
         icon = Icons.fiber_new_rounded;
-        label = 'NEW';
+        label = 'جديد';
         break;
       case ListingStatus.active:
         color = AppTheme.success;
         icon = Icons.check_circle_rounded;
-        label = 'ACTIVE';
+        label = 'نشط';
         break;
       case ListingStatus.expiringSoon:
         color = AppTheme.warning;
         icon = Icons.timer_rounded;
-        label = 'EXPIRING SOON';
+        label = 'ينتهي قريباً';
         break;
       case ListingStatus.expired:
         color = AppTheme.error;
         icon = Icons.cancel_rounded;
-        label = 'EXPIRED';
+        label = 'منتهي';
         break;
     }
     return Container(
@@ -378,7 +338,7 @@ class _ListingPageState extends State<ListingPage> {
           ),
           const SizedBox(height: AppTheme.spaceM),
           Text(
-            '\$${_listing.price.toStringAsFixed(0)}',
+            '${_listing.price.toStringAsFixed(0)} د.ك',
             style: const TextStyle(
               fontSize: 26,
               fontWeight: FontWeight.w900,
@@ -401,8 +361,8 @@ class _ListingPageState extends State<ListingPage> {
                 const SizedBox(width: 4),
                 Text(
                   _listing.remainingDays == 0
-                      ? 'Listing expired'
-                      : '${_listing.remainingDays} days remaining',
+                      ? 'انتهى الإعلان'
+                      : 'متبقي ${_listing.remainingDays} يوم',
                   style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
@@ -427,22 +387,22 @@ class _ListingPageState extends State<ListingPage> {
       case ListingStatus.newListing:
         color = AppTheme.primary;
         bg = AppTheme.primaryLight;
-        label = 'New';
+        label = 'جديد';
         break;
       case ListingStatus.active:
         color = AppTheme.success;
         bg = AppTheme.successLight;
-        label = 'Active';
+        label = 'نشط';
         break;
       case ListingStatus.expiringSoon:
         color = AppTheme.warning;
         bg = AppTheme.warningLight;
-        label = 'Expiring';
+        label = 'ينتهي قريباً';
         break;
       case ListingStatus.expired:
         color = AppTheme.error;
         bg = AppTheme.errorLight;
-        label = 'Expired';
+        label = 'منتهي';
         break;
     }
     return Container(
@@ -467,13 +427,13 @@ class _ListingPageState extends State<ListingPage> {
   Widget _buildStatsRow() {
     return Row(
       children: [
-        _statChip(Icons.king_bed_rounded, '${_listing.bedrooms} Beds'),
+        _statChip(Icons.king_bed_rounded, '${_listing.bedrooms} غرف'),
         const SizedBox(width: AppTheme.spaceS),
-        _statChip(Icons.bathtub_rounded, '${_listing.bathrooms} Baths'),
+        _statChip(Icons.bathtub_rounded, '${_listing.bathrooms} حمامات'),
         const SizedBox(width: AppTheme.spaceS),
         _statChip(
           Icons.square_foot_rounded,
-          '${_listing.areaSqft.toStringAsFixed(0)} sqft',
+          '${_listing.areaSqft.toStringAsFixed(0)} قدم²',
         ),
       ],
     );
@@ -548,7 +508,7 @@ class _ListingPageState extends State<ListingPage> {
                   ),
                   const SizedBox(width: AppTheme.spaceS),
                   const Text(
-                    'Boost Your Listing',
+                    'تمييز إعلانك',
                     style: TextStyle(
                       fontSize: 17,
                       fontWeight: FontWeight.w700,
@@ -559,7 +519,7 @@ class _ListingPageState extends State<ListingPage> {
               ),
               const SizedBox(height: AppTheme.spaceS),
               const Text(
-                'Get 5x more views and sell faster',
+                'يظهر إعلانك في مقدمة نتائج البحث ويزيد فرص البيع.',
                 style: TextStyle(fontSize: 15, color: AppTheme.textSecondary),
               ),
               const SizedBox(height: AppTheme.spaceS),
@@ -573,7 +533,7 @@ class _ListingPageState extends State<ListingPage> {
                   const SizedBox(width: 6),
                   Expanded(
                     child: Text(
-                      'Boosted listings get higher ranking & visibility',
+                      'يمكنك الجمع بين التمييز داخل التطبيق والتنبيهات وواتساب وإنستغرام.',
                       style: TextStyle(
                         fontSize: 12,
                         color: Colors.orange.shade700,
@@ -596,12 +556,7 @@ class _ListingPageState extends State<ListingPage> {
             width: double.infinity,
             child: ElevatedButton.icon(
               onPressed: _listing.canBoost ? _navigateToBoost : null,
-              icon: const Icon(
-                Icons.rocket_launch_rounded,
-                size: 18,
-                color: AppTheme.accent,
-              ),
-              label: const Text('Boost Listing'),
+              label: const Text('تمييز الإعلان'),
             ),
           ),
         ),
@@ -640,7 +595,7 @@ class _ListingPageState extends State<ListingPage> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const Text(
-                      'Listing is Boosted!',
+                      'الإعلان مُميَّز!',
                       style: TextStyle(
                         fontSize: 15,
                         fontWeight: FontWeight.w700,
@@ -648,7 +603,7 @@ class _ListingPageState extends State<ListingPage> {
                       ),
                     ),
                     Text(
-                      '${_listing.boostRemainingDays} days remaining',
+                      'متبقي ${_listing.boostRemainingDays} يوم',
                       style: const TextStyle(
                         fontSize: 12,
                         color: AppTheme.textSecondary,
@@ -667,7 +622,7 @@ class _ListingPageState extends State<ListingPage> {
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Text(
-                  '${_listing.boostRemainingDays}d left',
+                  'متبقي ${_listing.boostRemainingDays} يوم',
                   style: const TextStyle(
                     color: Colors.white,
                     fontSize: 12,
@@ -683,7 +638,7 @@ class _ListingPageState extends State<ListingPage> {
             child: OutlinedButton.icon(
               onPressed: _navigateToBoost,
               icon: const Icon(Icons.add_rounded, size: 18),
-              label: const Text('Extend Boost'),
+              label: const Text('تمديد التمييز'),
               style: OutlinedButton.styleFrom(
                 foregroundColor: AppTheme.warning,
                 side: const BorderSide(color: AppTheme.warning),
@@ -715,7 +670,7 @@ class _ListingPageState extends State<ListingPage> {
               Icon(Icons.cancel_rounded, color: AppTheme.error, size: 20),
               SizedBox(width: 8),
               Text(
-                'Listing Expired',
+                'انتهى الإعلان',
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w700,
@@ -726,7 +681,7 @@ class _ListingPageState extends State<ListingPage> {
           ),
           const SizedBox(height: 6),
           const Text(
-            'This listing has expired and cannot be boosted. Please renew it first.',
+            'انتهت صلاحية هذا الإعلان ولا يمكن تمييزه. يرجى تجديده أولاً.',
             style: TextStyle(
               fontSize: 13,
               color: AppTheme.textSecondary,
@@ -755,7 +710,7 @@ class _ListingPageState extends State<ListingPage> {
                 );
               },
               icon: const Icon(Icons.refresh_rounded, size: 18),
-              label: const Text('Renew Listing'),
+              label: const Text('تجديد الإعلان'),
               style: ElevatedButton.styleFrom(backgroundColor: AppTheme.error),
             ),
           ),
@@ -763,8 +718,6 @@ class _ListingPageState extends State<ListingPage> {
       ),
     );
   }
-
-  // ── Navigation ────────────────────────────────────────────────
 
   void _navigateToBoost() {
     Navigator.of(context).push(

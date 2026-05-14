@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/formatting/app_currency.dart';
 import '../../../core/theme/app_theme.dart';
 import '../models/boost_selection_state.dart';
 
@@ -37,16 +38,10 @@ class BoostButton extends StatelessWidget {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Icon(
-                    Icons.rocket_launch_rounded,
-                    size: 20,
-                    color: AppTheme.accent,
-                  ),
-                  const SizedBox(width: 10),
                   Text(
                     isEnabled
-                        ? 'Boost Now  •  \$${state.totalPrice.toStringAsFixed(2)}'
-                        : 'Select an option to boost',
+                        ? 'تأكيد التمييز (الدفع الآن)  •  ${formatKwd(state.totalPrice)}'
+                        : 'اختر خياراً واحداً على الأقل',
                     style: const TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w700,

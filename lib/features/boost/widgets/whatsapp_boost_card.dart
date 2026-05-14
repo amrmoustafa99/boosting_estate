@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:intl/intl.dart';
 
+import '../../../core/formatting/app_currency.dart';
 import '../../../core/theme/app_theme.dart';
 import '../models/boost_option.dart';
 import '../models/boost_selection_state.dart';
@@ -24,6 +26,11 @@ class WhatsAppBoostCard extends StatelessWidget {
   });
 
   bool get _isSelected => state.whatsappSelected;
+
+  void _toggleMain() {
+    final v = !state.whatsappSelected;
+    onStateChanged(state.copyWith(whatsappSelected: v));
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -57,28 +64,27 @@ class WhatsAppBoostCard extends StatelessWidget {
       ),
       child: Material(
         color: Colors.transparent,
-        child: InkWell(
-          borderRadius: BorderRadius.circular(AppTheme.radiusL),
-          onTap: isEligible
-              ? () => onStateChanged(
-                  state.copyWith(whatsappSelected: !_isSelected),
-                )
-              : null,
-          child: Padding(
-            padding: const EdgeInsets.all(AppTheme.spaceM),
-            child: Column(
-              children: [
-                _buildHeader(),
-                if (!isEligible && ineligibilityReason != null) ...[
-                  const SizedBox(height: AppTheme.spaceS),
-                  _buildIneligibilityBanner(),
-                ],
-                if (isEligible && _isSelected) ...[
-                  const SizedBox(height: AppTheme.spaceM),
-                  _buildSlotInfo(info),
-                ],
+        child: Padding(
+          padding: const EdgeInsets.all(AppTheme.spaceM),
+          child: Column(
+            children: [
+              InkWell(
+                borderRadius: BorderRadius.circular(AppTheme.radiusS),
+                onTap: isEligible ? _toggleMain : null,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 2),
+                  child: _buildHeader(),
+                ),
+              ),
+              if (!isEligible && ineligibilityReason != null) ...[
+                const SizedBox(height: AppTheme.spaceS),
+                _buildIneligibilityBanner(),
               ],
-            ),
+              if (isEligible && _isSelected) ...[
+                const SizedBox(height: AppTheme.spaceM),
+                _buildSlotInfo(info),
+              ],
+            ],
           ),
         ),
       ),
@@ -131,14 +137,16 @@ class WhatsAppBoostCard extends StatelessWidget {
                 : AppTheme.background,
             borderRadius: BorderRadius.circular(AppTheme.radiusS),
           ),
-          child: Icon(
-            Icons.chat_rounded,
-            color: isDisabled
-                ? AppTheme.textHint
-                : _isSelected
-                ? Colors.white
-                : AppTheme.whatsappGreen,
-            size: 22,
+          child: Center(
+            child: FaIcon(
+              FontAwesomeIcons.whatsapp,
+              color: isDisabled
+                  ? AppTheme.textHint
+                  : _isSelected
+                  ? Colors.white
+                  : AppTheme.whatsappGreen,
+              size: 22,
+            ),
           ),
         ),
         const SizedBox(width: AppTheme.spaceM),
@@ -176,7 +184,7 @@ class WhatsAppBoostCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.end,
           children: [
             Text(
-              '\$${option.fixedPrice!.toStringAsFixed(2)}',
+              formatKwd(option.fixedPrice!),
               style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w700,
@@ -226,6 +234,7 @@ class WhatsAppBoostCard extends StatelessWidget {
         border: Border.all(color: AppTheme.whatsappGreen.withOpacity(0.2)),
       ),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Icon(
             Icons.event_available_rounded,
@@ -238,15 +247,16 @@ class WhatsAppBoostCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const Text(
-                  'Next Available Broadcast',
+                  'الموعد القادم للبث',
                   style: TextStyle(
                     fontSize: 11,
                     color: AppTheme.textSecondary,
                     fontWeight: FontWeight.w500,
                   ),
                 ),
+                const SizedBox(height: 2),
                 Text(
-                  _formatSlot(info.nextSlot),
+                  _formatSlotAr(info.nextSlot),
                   style: const TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w700,
@@ -256,27 +266,14 @@ class WhatsAppBoostCard extends StatelessWidget {
               ],
             ),
           ),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-            decoration: BoxDecoration(
-              color: AppTheme.whatsappGreen.withOpacity(0.15),
-              borderRadius: BorderRadius.circular(99),
-            ),
-            child: Text(
-              '${info.slotsLeft} slots',
-              style: const TextStyle(
-                fontSize: 10,
-                fontWeight: FontWeight.w600,
-                color: Color(0xFF1A7A47),
-              ),
-            ),
-          ),
         ],
       ),
     );
   }
 
-  String _formatSlot(DateTime dt) {
-    return '${DateFormat('EEEE').format(dt)} - ${DateFormat('h:mm a').format(dt)}';
+  String _formatSlotAr(DateTime dt) {
+    final time = DateFormat('jm', 'ar').format(dt);
+    final dayName = DateFormat('EEEE', 'ar').format(dt);
+    return '$dayName — $time';
   }
 }

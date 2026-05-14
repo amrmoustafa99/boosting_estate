@@ -1,4 +1,5 @@
 import 'boost_option.dart';
+import '../services/boost_queue_service.dart';
 
 class BoostSelectionState {
   final DurationOption? selectedDuration;
@@ -15,36 +16,50 @@ class BoostSelectionState {
     this.whatsappSelected = false,
   });
 
+  bool get _urgentPushSoldOut =>
+      BoostQueueService.instance.getPushSlotInfo().urgentSoldOut;
+
   double get totalPrice {
     double total = 0;
     if (selectedDuration != null) total += selectedDuration!.price;
-    if (urgentPushSelected) {
-      total += 12.99;
+    if (urgentPushSelected && !_urgentPushSoldOut) {
+      total += 8;
     } else if (pushSelected) {
-      total += 4.99;
+      total += 3;
     }
     for (final fmt in selectedInstagramFormats) {
       total += _instagramPriceFor(fmt);
     }
-    if (whatsappSelected) total += 6.99;
+    if (whatsappSelected) total += 2;
     return total;
+  }
+
+  String _instagramLabelAr(InstagramFormat fmt) {
+    switch (fmt) {
+      case InstagramFormat.story:
+        return 'ترويج انستقرام — ستوري';
+      case InstagramFormat.post:
+        return 'ترويج انستقرام — منشور';
+      case InstagramFormat.reel:
+        return 'ترويج انستقرام — ريلز';
+    }
   }
 
   double _instagramPriceFor(InstagramFormat fmt) {
     switch (fmt) {
       case InstagramFormat.story:
-        return 7.99;
+        return 2;
       case InstagramFormat.post:
-        return 12.99;
+        return 5;
       case InstagramFormat.reel:
-        return 19.99;
+        return 8;
     }
   }
 
   bool get hasSelection =>
       selectedDuration != null ||
       pushSelected ||
-      urgentPushSelected ||
+      (urgentPushSelected && !_urgentPushSoldOut) ||
       selectedInstagramFormats.isNotEmpty ||
       whatsappSelected;
 
@@ -53,18 +68,19 @@ class BoostSelectionState {
     if (selectedDuration != null) {
       items.add(
         SelectedBoostItem(
-          label: 'In-App Featured (${selectedDuration!.days} days)',
+          label:
+              'تمييز الإعلان داخل التطبيق (${selectedDuration!.days} ${selectedDuration!.days == 1 ? 'يوم' : 'أيام'})',
           price: selectedDuration!.price,
           isRecurring: true,
           isProcessingAuto: true,
         ),
       );
     }
-    if (urgentPushSelected) {
+    if (urgentPushSelected && !_urgentPushSoldOut) {
       items.add(
         const SelectedBoostItem(
-          label: 'Urgent Push Today (2h)',
-          price: 12.99,
+          label: 'تنبيه عاجل اليوم (خلال ساعتين)',
+          price: 8,
           isRecurring: false,
           isProcessingAuto: false,
         ),
@@ -72,8 +88,8 @@ class BoostSelectionState {
     } else if (pushSelected) {
       items.add(
         const SelectedBoostItem(
-          label: 'Push Notification',
-          price: 4.99,
+          label: 'تنبيهات مباشرة (Push)',
+          price: 3,
           isRecurring: false,
           isProcessingAuto: true,
         ),
@@ -82,8 +98,7 @@ class BoostSelectionState {
     for (final fmt in selectedInstagramFormats) {
       items.add(
         SelectedBoostItem(
-          label:
-              'Instagram ${fmt.name[0].toUpperCase()}${fmt.name.substring(1)}',
+          label: _instagramLabelAr(fmt),
           price: _instagramPriceFor(fmt),
           isRecurring: false,
           isProcessingAuto: false,
@@ -93,8 +108,8 @@ class BoostSelectionState {
     if (whatsappSelected) {
       items.add(
         const SelectedBoostItem(
-          label: 'WhatsApp Blast',
-          price: 6.99,
+          label: 'برودكاست واتساب',
+          price: 2,
           isRecurring: false,
           isProcessingAuto: false,
         ),

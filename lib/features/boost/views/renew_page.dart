@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/formatting/app_currency.dart';
 import '../../../core/theme/app_theme.dart';
 import '../models/listing_model.dart';
 
@@ -47,7 +48,7 @@ class _RenewPageState extends State<RenewPage> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text(
-            'Confirm Payment',
+            'تأكيد الدفع',
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.w800,
@@ -55,11 +56,11 @@ class _RenewPageState extends State<RenewPage> {
             ),
           ),
           const SizedBox(height: AppTheme.spaceM),
-          _summaryRow('Listing renewal', '$_selectedDays days'),
-          _summaryRow('Subtotal', '\$${_subtotal.toStringAsFixed(2)}'),
-          _summaryRow('VAT (14%)', '\$${_vat.toStringAsFixed(2)}'),
+          _summaryRow('تجديد الإعلان', '$_selectedDays يوم'),
+          _summaryRow('المجموع الفرعي', formatKwd(_subtotal)),
+          _summaryRow('ضريبة القيمة المضافة (14٪)', formatKwd(_vat)),
           const Divider(color: AppTheme.border),
-          _summaryRow('Total', '\$${_total.toStringAsFixed(2)}', isBold: true),
+          _summaryRow('الإجمالي', formatKwd(_total), isBold: true),
           const SizedBox(height: AppTheme.spaceL),
           SizedBox(
             width: double.infinity,
@@ -68,7 +69,7 @@ class _RenewPageState extends State<RenewPage> {
                 Navigator.pop(context); // close sheet
                 _onPaymentSuccess();
               },
-              child: Text('Pay \$${_total.toStringAsFixed(2)}'),
+              child: Text('ادفع ${formatKwd(_total)}'),
             ),
           ),
         ],
@@ -129,7 +130,7 @@ class _RenewPageState extends State<RenewPage> {
             ),
             const SizedBox(height: AppTheme.spaceM),
             const Text(
-              'Listing Renewed!',
+              'تم تجديد الإعلان!',
               style: TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.w800,
@@ -138,7 +139,7 @@ class _RenewPageState extends State<RenewPage> {
             ),
             const SizedBox(height: AppTheme.spaceS),
             const Text(
-              'Your listing is now active and visible in search results.',
+              'أصبح إعلانك نشطاً ويظهر في نتائج البحث.',
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 13,
@@ -158,7 +159,7 @@ class _RenewPageState extends State<RenewPage> {
                   ..pop() // close dialog
                   ..pop(); // go back to listing page
               },
-              child: const Text('Back to Listing'),
+              child: const Text('العودة للإعلان'),
             ),
           ),
         ],
@@ -171,7 +172,7 @@ class _RenewPageState extends State<RenewPage> {
     return Scaffold(
       backgroundColor: AppTheme.background,
       appBar: AppBar(
-        title: const Text('Renew Listing'),
+        title: const Text('تجديد الإعلان'),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 18),
           onPressed: () => Navigator.pop(context),
@@ -186,7 +187,7 @@ class _RenewPageState extends State<RenewPage> {
                 _buildListingPreview(),
                 const SizedBox(height: AppTheme.spaceL),
                 const Text(
-                  'Select Duration',
+                  'اختر مدة التجديد',
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w800,
@@ -206,7 +207,7 @@ class _RenewPageState extends State<RenewPage> {
               width: double.infinity,
               child: ElevatedButton(
                 onPressed: _goToPayment,
-                child: Text('Continue — \$${_subtotal.toStringAsFixed(2)}'),
+                child: Text('متابعة — ${formatKwd(_subtotal)}'),
               ),
             ),
           ),
@@ -245,7 +246,7 @@ class _RenewPageState extends State<RenewPage> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    '$days days',
+                    '$days يوم',
                     style: TextStyle(
                       fontSize: 15,
                       fontWeight: FontWeight.w700,
@@ -256,12 +257,12 @@ class _RenewPageState extends State<RenewPage> {
                   ),
                   if (days == 60)
                     const Text(
-                      'Best value · save 17%',
+                      'أفضل قيمة · وفر 17٪',
                       style: TextStyle(fontSize: 11, color: AppTheme.success),
                     ),
                   if (days == 90)
                     const Text(
-                      'Maximum visibility',
+                      'أقصى مدة ظهور',
                       style: TextStyle(
                         fontSize: 11,
                         color: AppTheme.textSecondary,
@@ -271,7 +272,7 @@ class _RenewPageState extends State<RenewPage> {
               ),
             ),
             Text(
-              '\$${price.toStringAsFixed(2)}',
+              formatKwd(price),
               style: TextStyle(
                 fontSize: 15,
                 fontWeight: FontWeight.w800,
@@ -340,7 +341,7 @@ class _RenewPageState extends State<RenewPage> {
                 Row(
                   children: [
                     Text(
-                      '\$${widget.listing.price.toStringAsFixed(0)}',
+                      '${widget.listing.price.toStringAsFixed(0)} د.ك',
                       style: const TextStyle(
                         fontSize: 15,
                         fontWeight: FontWeight.w800,
@@ -358,7 +359,7 @@ class _RenewPageState extends State<RenewPage> {
                         borderRadius: BorderRadius.circular(99),
                       ),
                       child: const Text(
-                        'Expired',
+                        'منتهي',
                         style: TextStyle(
                           fontSize: 11,
                           fontWeight: FontWeight.w700,
@@ -384,13 +385,13 @@ class _RenewPageState extends State<RenewPage> {
         borderRadius: BorderRadius.circular(AppTheme.radiusM),
         border: Border.all(color: AppTheme.primary.withOpacity(0.2)),
       ),
-      child: const Row(
+      child: Row(
         children: [
           Icon(Icons.info_outline_rounded, size: 16, color: AppTheme.primary),
           SizedBox(width: 8),
           Expanded(
             child: Text(
-              'After renewal your listing will be reactivated immediately. All existing photos and details are preserved.',
+              'بعد التجديد يُفعّل إعلانك فوراً مع الإبقاء على الصور والتفاصيل كما هي.',
               style: TextStyle(
                 fontSize: 12,
                 color: AppTheme.primary,
